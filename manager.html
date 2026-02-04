@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSP Meta Tag for Paystack -->
+    <!-- CSP Meta Tag for Paystack - REMOVED frame-ancestors from meta tag -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://js.paystack.co https://unpkg.com 'unsafe-inline' 'unsafe-eval';
@@ -16,7 +16,6 @@
         object-src 'none';
         base-uri 'self';
         form-action 'self';
-        frame-ancestors 'none';
         block-all-mixed-content;
         upgrade-insecure-requests;
     ">
@@ -103,6 +102,16 @@
                             <div class="stat-label">Total completed orders</div>
                         </div>
                         <div class="stat-card">
+                            <h3>Weekly Revenue</h3>
+                            <div class="stat-number" id="weekRevenue">R0</div>
+                            <div class="stat-label">Current week only</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Weekly Orders</h3>
+                            <div class="stat-number" id="weekOrders">0</div>
+                            <div class="stat-label">Current week only</div>
+                        </div>
+                        <div class="stat-card">
                             <h3>Monthly Revenue</h3>
                             <div class="stat-number" id="monthRevenue">R0</div>
                             <div class="stat-label">Current month only</div>
@@ -122,7 +131,7 @@
                     <!-- Download Statement -->
                     <div class="download-section">
                         <h3>Download Statement</h3>
-                        <p>Download complete order data for monthly or annual reports</p>
+                        <p>Download complete order data for weekly, monthly or annual reports</p>
                         <button class="download-btn" id="downloadStatementBtn">Download Statement</button>
                     </div>
                 </div>
@@ -334,6 +343,7 @@
                         <div class="form-group">
                             <label for="statementType">Select Statement Type</label>
                             <select id="statementType">
+                                <option value="weekly">Weekly Statement</option>
                                 <option value="monthly">Monthly Statement</option>
                                 <option value="yearly">Annual Statement</option>
                             </select>

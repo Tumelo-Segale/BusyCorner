@@ -219,10 +219,6 @@ nav {
   position: relative;
 }
 
-.cart-btn:hover {
-  transform: scale(1.1);
-}
-
 .cart-icon {
   font-size: 24px;
 }
@@ -382,10 +378,6 @@ nav {
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s ease;
-}
-
-.checkout-btn:hover {
-  background: #500000;
 }
 
 /* Order Modal */
@@ -996,10 +988,6 @@ nav {
   transition: background 0.3s ease;
 }
 
-.add-to-cart:hover {
-  background: #500000;
-}
-
 /* Contact Section */
 .contact-form {
   background: #f8f9fa;
@@ -1051,10 +1039,6 @@ nav {
   width: 100%;
   transition: background 0.3s ease;
   font-weight: 500;
-}
-
-.submit-btn:hover {
-  background: #500000;
 }
 
 /* Profile Actions */
@@ -1115,11 +1099,6 @@ nav {
   cursor: pointer;
 }
 
-.form-links a:hover {
-  text-decoration: underline;
-  color: #500000;
-}
-
 .login-benefits {
   background: #f8f9fa;
   padding: 4px 16px;
@@ -1172,11 +1151,6 @@ nav {
   transition: all 0.3s ease;
 }
 
-.order-item:hover {
-  border-color: #500000;
-  box-shadow: 0 2px 8px rgba(178, 34, 34, 0.1);
-}
-
 .order-item-header {
   display: flex;
   justify-content: space-between;
@@ -1222,10 +1196,6 @@ nav {
   font-weight: 500;
   transition: background 0.3s ease;
   width: 100%;
-}
-
-.view-order-btn:hover {
-  background: #500000;
 }
 
 .empty-orders {
@@ -1460,10 +1430,6 @@ body {
   background: #500000;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #500000;
-}
-
 .logout-confirm-modal {
   position: fixed;
   top: 0;
@@ -1553,8 +1519,4 @@ body {
   font-weight: 500;
   width: 120px;
   transition: background 0.3s ease;
-}
-
-.logout-btn:hover {
-  background: #500000;
 }

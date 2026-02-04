@@ -178,6 +178,8 @@ const yearRevenue = document.getElementById('yearRevenue');
 const downloadStatementBtn = document.getElementById('downloadStatementBtn');
 const monthRevenue = document.getElementById('monthRevenue');
 const monthOrders = document.getElementById('monthOrders');
+const weekRevenue = document.getElementById('weekRevenue');
+const weekOrders = document.getElementById('weekOrders');
 
 // Statement modal elements
 const statementModal = document.getElementById('statementModal');
@@ -282,40 +284,116 @@ let currentCashOrder = {
     type: 'cash'
 };
 
-// Stats tracking with auto-reset
-let stats = safeStorage.getJSON('managerStats') || {
-    today: {
-        date: new Date().toDateString(),
-        orders: 0,
-        revenue: 0
-    },
-    monthly: {
-        month: new Date().getMonth(),
-        year: new Date().getFullYear(),
-        orders: 0,
-        revenue: 0
-    },
-    yearly: {
-        year: new Date().getFullYear(),
-        orders: 0,
-        revenue: 0
-    }
-};
+// Helper function to get week number
+function getWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    return weekNo;
+}
+
+// Helper function to get start and end of week
+function getWeekRange(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
+    const start = new Date(d.setDate(diff));
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
 
 // Initialize cash orders in localStorage
 let cashOrders = safeStorage.getJSON('cashOrders') || [];
+
+// Initialize stats with proper structure
+function initializeStats() {
+    const now = new Date();
+    const today = now.toDateString();
+    const currentWeek = getWeekNumber(now);
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    let stats = safeStorage.getJSON('managerStats');
+    
+    // If no stats exist or stats structure is incomplete, create new stats
+    if (!stats || typeof stats !== 'object') {
+        stats = {
+            today: {
+                date: today,
+                orders: 0,
+                revenue: 0
+            },
+            weekly: {
+                week: currentWeek,
+                year: currentYear,
+                orders: 0,
+                revenue: 0
+            },
+            monthly: {
+                month: currentMonth,
+                year: currentYear,
+                orders: 0,
+                revenue: 0
+            },
+            yearly: {
+                year: currentYear,
+                orders: 0,
+                revenue: 0
+            }
+        };
+    } else {
+        // Ensure all required properties exist
+        if (!stats.today) stats.today = { date: today, orders: 0, revenue: 0 };
+        if (!stats.weekly) stats.weekly = { week: currentWeek, year: currentYear, orders: 0, revenue: 0 };
+        if (!stats.monthly) stats.monthly = { month: currentMonth, year: currentYear, orders: 0, revenue: 0 };
+        if (!stats.yearly) stats.yearly = { year: currentYear, orders: 0, revenue: 0 };
+    }
+    
+    safeStorage.setJSON('managerStats', stats);
+    return stats;
+}
+
+// Stats tracking with auto-reset
+let stats = initializeStats();
 
 // Check and reset stats if needed
 function checkAndResetStats() {
     const now = new Date();
     const today = now.toDateString();
+    const currentWeek = getWeekNumber(now);
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
+    
+    // Initialize stats if they don't exist
+    if (!stats) {
+        stats = initializeStats();
+    }
+    
+    // Ensure stats object has all required properties
+    if (!stats.today) stats.today = { date: today, orders: 0, revenue: 0 };
+    if (!stats.weekly) stats.weekly = { week: currentWeek, year: currentYear, orders: 0, revenue: 0 };
+    if (!stats.monthly) stats.monthly = { month: currentMonth, year: currentYear, orders: 0, revenue: 0 };
+    if (!stats.yearly) stats.yearly = { year: currentYear, orders: 0, revenue: 0 };
     
     // Reset daily stats if it's a new day
     if (stats.today.date !== today) {
         stats.today = {
             date: today,
+            orders: 0,
+            revenue: 0
+        };
+    }
+    
+    // Reset weekly stats if it's a new week
+    if (stats.weekly.week !== currentWeek || stats.weekly.year !== currentYear) {
+        stats.weekly = {
+            week: currentWeek,
+            year: currentYear,
             orders: 0,
             revenue: 0
         };
@@ -370,6 +448,23 @@ function formatDate(dateString) {
         return `${day} ${month} ${year}`;
     } catch (e) {
         console.error('Error formatting date:', e);
+        return 'Unknown date';
+    }
+}
+
+// Format date to DD/MM/YYYY for statements
+function formatDateForStatement(dateString) {
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid date';
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${day}/${month}/${year}`;
+    } catch (e) {
+        console.error('Error formatting date for statement:', e);
         return 'Unknown date';
     }
 }
@@ -487,6 +582,11 @@ function updateDashboardStats() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
+    // Get week range
+    const weekRange = getWeekRange(now);
+    const weekStart = weekRange.start;
+    const weekEnd = weekRange.end;
+    
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -506,6 +606,15 @@ function updateDashboardStats() {
     
     const todayOrdersCount = todayOrdersList.length;
     const todayRevenueAmount = todayOrdersList.reduce((sum, order) => sum + (order.total || 0), 0);
+    
+    // Calculate weekly stats (card + cash)
+    const weeklyOrdersList = completedOrdersList.filter(order => {
+        const orderDate = new Date(order.timestamp);
+        return orderDate >= weekStart && orderDate <= weekEnd;
+    });
+    
+    const weeklyOrdersCount = weeklyOrdersList.length;
+    const weeklyRevenueAmount = weeklyOrdersList.reduce((sum, order) => sum + (order.total || 0), 0);
     
     // Calculate monthly stats (card + cash)
     const monthlyOrdersList = completedOrdersList.filter(order => {
@@ -538,6 +647,8 @@ function updateDashboardStats() {
         if (todayRevenue) todayRevenue.textContent = formatCurrency(todayRevenueAmount);
         if (pendingOrders) pendingOrders.textContent = pendingCount;
         if (completedOrders) completedOrders.textContent = completedCount;
+        if (weekRevenue) weekRevenue.textContent = formatCurrency(weeklyRevenueAmount);
+        if (weekOrders) weekOrders.textContent = weeklyOrdersCount;
         if (monthRevenue) monthRevenue.textContent = formatCurrency(monthlyRevenueAmount);
         if (monthOrders) monthOrders.textContent = monthlyOrdersCount;
         if (yearRevenue) yearRevenue.textContent = formatCurrency(yearlyRevenueAmount);
@@ -546,6 +657,8 @@ function updateDashboardStats() {
     // Update stats tracking
     stats.today.orders = todayOrdersCount;
     stats.today.revenue = todayRevenueAmount;
+    stats.weekly.orders = weeklyOrdersCount;
+    stats.weekly.revenue = weeklyRevenueAmount;
     stats.monthly.orders = monthlyOrdersCount;
     stats.monthly.revenue = monthlyRevenueAmount;
     stats.yearly.orders = yearlyOrdersCount;
@@ -1401,7 +1514,7 @@ function showStatementModal() {
     }
 }
 
-// Download statement as Excel file
+// Download statement as Excel file - REMOVED Payment Type column
 function downloadStatement(statementTypeValue, includeProfitCalc) {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -1412,7 +1525,22 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     let sheetName = '';
     let title = '';
     
-    if (statementTypeValue === 'monthly') {
+    if (statementTypeValue === 'weekly') {
+        // Get current week range
+        const weekRange = getWeekRange(currentDate);
+        const weekStart = weekRange.start;
+        const weekEnd = weekRange.end;
+        
+        filteredOrders = orderManager.getOrdersByDateRange(weekStart, weekEnd);
+        
+        // Format dates for filename
+        const startStr = `${weekStart.getDate().toString().padStart(2, '0')}-${(weekStart.getMonth() + 1).toString().padStart(2, '0')}`;
+        const endStr = `${weekEnd.getDate().toString().padStart(2, '0')}-${(weekEnd.getMonth() + 1).toString().padStart(2, '0')}`;
+        
+        fileName = `BusyCorner_Statement_Week_${startStr}_to_${endStr}_${currentYear}`;
+        sheetName = `Statement_Week_${startStr}_to_${endStr}_${currentYear}`;
+        title = `BusyCorner - Week ${startStr} to ${endStr} ${currentYear} - Statement`;
+    } else if (statementTypeValue === 'monthly') {
         // Get first and last day of current month
         const firstDay = new Date(currentYear, currentMonth, 1);
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
@@ -1435,7 +1563,7 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     }
     
     if (filteredOrders.length === 0) {
-        showToast(`No orders completed`, 'error');
+        showToast(`No completed orders for selected period`, 'error');
         return;
     }
     
@@ -1445,6 +1573,8 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     // Summary sheet
     const summaryData = [
         [title],
+        statementTypeValue === 'weekly' ? 
+            [`Period: ${formatDateForStatement(filteredOrders[filteredOrders.length-1]?.timestamp)} to ${formatDateForStatement(filteredOrders[0]?.timestamp)}`] :
         statementTypeValue === 'monthly' ? 
             [`Month: ${currentMonth + 1}/${currentYear}`] : 
             [`Year: ${currentYear}`],
@@ -1461,11 +1591,11 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     
     summaryData.push([], ["Order Details"]);
     
-    // Order details
+    // Order details - REMOVED Payment Type column
     const orderDetails = filteredOrders.map(order => {
         const profit = calculateProfit(order.total || 0);
         const row = [
-            order.timestamp ? formatDate(order.timestamp) : 'Unknown',
+            order.timestamp ? formatDateForStatement(order.timestamp) : 'Unknown',
             order.orderId || 'Unknown',
             `R${(order.total || 0).toFixed(2)}`
         ];
@@ -1477,7 +1607,7 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
         return row;
     });
     
-    // Combine data
+    // Combine data - REMOVED "Payment Type" header
     const headers = ["Date", "Order ID", "Order Amount"];
     if (includeProfitCalc) {
         headers.push("5% Transactional Profit");
@@ -1489,8 +1619,8 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     
     // Set column widths
     const colWidths = [
-        { wch: 25 }, // Date column
-        { wch: 30 }, // Order ID column
+        { wch: 15 }, // Date column
+        { wch: 25 }, // Order ID column
         { wch: 15 }  // Amount column
     ];
     
@@ -1505,7 +1635,10 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
     // Generate and download Excel file
     XLSX.writeFile(workbook, `${fileName}.xlsx`);
     
-    showToast(`${statementTypeValue === 'monthly' ? 'Monthly' : 'Annual'} statement downloaded${includeProfitCalc ? ' with profit calculation' : ''}`);
+    const typeText = statementTypeValue === 'weekly' ? 'Weekly' : 
+                    statementTypeValue === 'monthly' ? 'Monthly' : 'Annual';
+    
+    showToast(`${typeText} statement downloaded${includeProfitCalc ? ' with profit calculation' : ''}`);
 }
 
 // Show confirm modal
@@ -1800,7 +1933,7 @@ if (cancelStatement) cancelStatement.addEventListener('click', () => {
 });
 
 if (confirmStatement) confirmStatement.addEventListener('click', () => {
-    const type = statementType ? statementType.value : 'monthly';
+    const type = statementType ? statementType.value : 'weekly';
     const includeProfitCalc = includeProfit ? includeProfit.checked : true;
     downloadStatement(type, includeProfitCalc);
     if (statementModal) statementModal.classList.remove('active');

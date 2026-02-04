@@ -280,10 +280,6 @@ nav {
   transition: background 0.3s ease;
 }
 
-.logout-btn:hover {
-  background: #600000;
-}
-
 /* Details Section */
 .admin-form {
   background: white;
@@ -459,10 +455,6 @@ nav {
   font-weight: 500;
   flex: 1;
   transition: background 0.3s ease;
-}
-
-.delete-btn:hover {
-  background: #500000;
 }
 
 .cancel-confirm-btn {
