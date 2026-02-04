@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP Meta Tag for Paystack -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://js.paystack.co https://unpkg.com 'unsafe-inline' 'unsafe-eval';
+        style-src 'self' https://paystack.com 'unsafe-inline';
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: https:;
+        connect-src 'self' https://api.paystack.co https://unpkg.com;
+        frame-src 'self' https://js.paystack.co https://checkout.paystack.com;
+        object-src 'none';
+        base-uri 'self';
+        form-action 'self';
+        frame-ancestors 'none';
+        block-all-mixed-content;
+        upgrade-insecure-requests;
+    ">
+    <link rel="shortcut icon" href="./BusyCorner.png" type="image/x-icon">
+    <link rel="stylesheet" href="./manager.css">
+    <script src="./manager.js" defer></script>
+    <title>BusyCorner - Manager</title>
+</head>
+
+<body>
+    <!-- Desktop Warning -->
+    <div class="desktop-warning" id="desktopWarning">
+        <div class="warning-content">
+            <img src="./BusyCorner.png" alt="BusyCorner Logo" class="warning-logo">
+            <h1>Desktop Not Supported</h1>
+            <p>This platform is optimized for mobile and tablet devices only.<br>
+                Please open on a mobile device or resize your browser window.
+            </p>
+        </div>
+    </div>
+
+    <!-- Mobile Content -->
+    <div class="mobile-content" id="mobileContent">
+        <!-- Fixed Navigation -->
+        <nav id="mainNav">
+            <div class="logo">
+                <img src="./BusyCorner.png" alt="BusyCorner Logo">
+            </div>
+
+            <!-- Hamburger Menu Button -->
+            <button class="hamburger-menu" id="hamburgerBtn" aria-label="Toggle navigation menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <ul class="sidebar-nav">
+                <li><a href="#dashboard" class="nav-link" data-section="dashboard">Dashboard</a></li>
+                <li><a href="#cash-orders" class="nav-link" data-section="cash-orders">Cash Payments</a></li>
+                <li><a href="#orders" class="nav-link" data-section="orders">Orders</a></li>
+                <li><a href="#items" class="nav-link" data-section="items">Items</a></li>
+                <li><a href="#messages" class="nav-link" data-section="messages">Messages</a></li>
+                <li><a href="#details" class="nav-link" data-section="details">Details</a></li>
+                <li><a href="#logout" class="nav-link" id="logoutLink">Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Overlay for closing sidebar -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- Main content area -->
+        <main id="mainContent">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="page-section active">
+                <div class="section-content">
+                    <h1>Dashboard</h1>
+                    <p>Monitor and Manage your restaurant operations.</p>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Today's Orders</h3>
+                            <div class="stat-number" id="todayOrders">0</div>
+                            <div class="stat-change" id="todayOrdersChange" style="display: none;"></div>
+                            <div class="stat-label">Total orders today</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Today's Revenue</h3>
+                            <div class="stat-number" id="todayRevenue">R0</div>
+                            <div class="stat-change" id="todayRevenueChange" style="display: none;"></div>
+                            <div class="stat-label">Revenue generated today</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Pending Orders</h3>
+                            <div class="stat-number" id="pendingOrders">0</div>
+                            <div class="stat-label">Require attention</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Completed Orders</h3>
+                            <div class="stat-number" id="completedOrders">0</div>
+                            <div class="stat-label">Total completed orders</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Monthly Revenue</h3>
+                            <div class="stat-number" id="monthRevenue">R0</div>
+                            <div class="stat-label">Current month only</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Monthly Orders</h3>
+                            <div class="stat-number" id="monthOrders">0</div>
+                            <div class="stat-label">Current month only</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>This Year's Revenue</h3>
+                            <div class="stat-number" id="yearRevenue">R0</div>
+                            <div class="stat-label">Current year only</div>
+                        </div>
+                    </div>
+
+                    <!-- Download Statement -->
+                    <div class="download-section">
+                        <h3>Download Statement</h3>
+                        <p>Download complete order data for monthly or annual reports</p>
+                        <button class="download-btn" id="downloadStatementBtn">Download Statement</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Orders Section -->
+            <section id="orders" class="page-section">
+                <div class="section-content">
+                    <h1>Orders</h1>
+                    <p>View and Manage all customer orders.</p>
+
+                    <!-- Order Search -->
+                    <div class="order-search">
+                        <input type="text" id="orderSearch" placeholder="Search by Order ID...">
+                    </div>
+
+                    <!-- Order Filters -->
+                    <div class="order-filters">
+                        <button class="filter-btn active" data-status="pending">Pending</button>
+                        <button class="filter-btn" data-status="ready">Ready</button>
+                        <button class="filter-btn" data-status="completed">Completed</button>
+                    </div>
+
+                    <!-- Orders Container -->
+                    <div class="orders-container" id="ordersContainer">
+                        <div class="empty-state">
+                            <p>No pending orders found</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cash Orders Section -->
+            <section id="cash-orders" class="page-section">
+                <div class="section-content">
+                    <h1>Cash Orders</h1>
+                    <p>Process cash payments and create cash orders.</p>
+
+                    <!-- Menu Items for Cash Order -->
+                    <div class="cash-order-section">
+                        <div class="cash-order-form">
+                            <h3>Create Cash Order</h3>
+                            <div class="form-group">
+                                <label for="cashItemSelect">Select Item</label>
+                                <select id="cashItemSelect" class="cash-item-select">
+                                    <option value="">Select an item...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cashItemQuantity">Quantity</label>
+                                <input type="number" id="cashItemQuantity" min="1" value="1" class="cash-item-input">
+                            </div>
+                            <div class="form-group">
+                                <button class="add-to-cash-order-btn" id="addToCashOrderBtn">Add to Order</button>
+                            </div>
+                        </div>
+
+                        <!-- Current Cash Order -->
+                        <div class="current-cash-order">
+                            <h3>Current Order</h3>
+                            <div class="cash-order-items" id="cashOrderItems">
+                                <div class="empty-state">
+                                    <p>No items added yet</p>
+                                </div>
+                            </div>
+                            <div class="cash-order-summary">
+                                <div class="cash-order-total">
+                                    <span>Total:</span>
+                                    <span class="cash-total-amount" id="cashTotalAmount">R 0.00</span>
+                                </div>
+                                <button class="process-cash-payment-btn" id="processCashPaymentBtn">Process Cash
+                                    Payment</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Items Section -->
+            <section id="items" class="page-section">
+                <div class="section-content">
+                    <h1>Menu Items</h1>
+                    <p>Manage menu items and prices.</p>
+
+                    <!-- Item Filters -->
+                    <div class="item-filters">
+                        <button class="item-filter-btn active" data-filter="meals">Meals</button>
+                        <button class="item-filter-btn" data-filter="drinks">Drinks</button>
+                    </div>
+
+                    <!-- Add Item Button -->
+                    <div class="items-header">
+                        <button class="add-item-btn" id="addNewItemBtn">+ Add New Item</button>
+                    </div>
+
+                    <!-- Items Grid -->
+                    <div class="items-grid" id="itemsGrid">
+                        <div class="empty-state">
+                            <p>No menu items found</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Messages Section -->
+            <section id="messages" class="page-section">
+                <div class="section-content">
+                    <h1>Messages</h1>
+                    <p>View customer inquiries.</p>
+
+                    <!-- Messages List -->
+                    <div class="messages-container" id="messagesContainer">
+                        <div class="empty-state">
+                            <p>No messages yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Details Section -->
+            <section id="details" class="page-section">
+                <div class="section-content">
+                    <h1>Manager Details</h1>
+                    <p>Update your login credentials.</p>
+
+                    <!-- Manager Info Form -->
+                    <form class="manager-form" id="managerForm">
+                        <h2>Login Details</h2>
+                        <div class="form-group">
+                            <label for="currentManagerEmail">Current Email Address</label>
+                            <input type="email" id="currentManagerEmail" placeholder="Current email" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="newManagerEmail">New Email Address</label>
+                            <input type="email" id="newManagerEmail" placeholder="Enter new email">
+                        </div>
+                        <div class="form-group">
+                            <label for="currentManagerPassword">Current Password</label>
+                            <input type="password" id="currentManagerPassword" placeholder="Enter current password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newManagerPassword">New Password</label>
+                            <input type="password" id="newManagerPassword" placeholder="Enter new password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmManagerPassword">Confirm New Password</label>
+                            <input type="password" id="confirmManagerPassword" placeholder="Confirm new password">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="cancel-btn" id="cancelChanges">Cancel</button>
+                            <button type="submit" class="save-btn">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Add/Edit Item Modal -->
+            <div class="item-modal" id="itemModal">
+                <div class="item-modal-content">
+                    <div class="item-modal-header">
+                        <h3 id="itemModalTitle">Add New Item</h3>
+                        <button class="close-item-modal" id="closeItemModal">&times;</button>
+                    </div>
+                    <div class="item-modal-body">
+                        <form class="item-form" id="itemForm">
+                            <div class="form-group">
+                                <label for="itemName">Item Name</label>
+                                <input type="text" id="itemName" placeholder="e.g. Chicken Burger" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="itemCategory">Category</label>
+                                <select id="itemCategory" required>
+                                    <option value="meals">Meals</option>
+                                    <option value="drinks">Drinks</option>
+                                </select>
+                            </div>
+                            <div class="form-group description-group" id="descriptionGroup">
+                                <label for="itemDescription">Description</label>
+                                <textarea id="itemDescription" placeholder="Describe the item" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="itemPrice">Price (R)</label>
+                                <input type="number" id="itemPrice" placeholder="e.g. 30" min="0" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="itemAvailable" checked>
+                                    <span>Item is available for ordering</span>
+                                </label>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" id="cancelItem">Cancel</button>
+                                <button type="submit" class="save-btn" id="saveItemBtn">Save Item</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statement Selection Modal -->
+            <div class="statement-modal" id="statementModal">
+                <div class="statement-modal-content">
+                    <div class="statement-modal-header">
+                        <h3>Download Statement</h3>
+                        <button class="close-statement-modal" id="closeStatementModal">&times;</button>
+                    </div>
+                    <div class="statement-modal-body">
+                        <div class="form-group">
+                            <label for="statementType">Select Statement Type</label>
+                            <select id="statementType">
+                                <option value="monthly">Monthly Statement</option>
+                                <option value="yearly">Annual Statement</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="includeProfit" checked>
+                                <span>Include 5% profit calculation</span>
+                            </label>
+                        </div>
+                        <p style="text-align: left; color: #666; font-size: 0.9rem; margin-top: 10px;">
+                            <b>With Profit</b>: Shows 5% profit per order and total profit<br>
+                            <b>Without Profit</b>: Standard statement without profit calculations
+                        </p>
+                    </div>
+                    <div class="statement-modal-footer">
+                        <button type="button" class="cancel-btn" id="cancelStatement">Cancel</button>
+                        <button type="button" class="save-btn" id="confirmStatement">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Details Modal -->
+            <div class="order-details-modal" id="orderDetailsModal">
+                <div class="order-details-modal-content">
+                    <div class="order-details-modal-header">
+                        <h3>Order Details</h3>
+                        <button class="close-order-details" id="closeOrderDetails">&times;</button>
+                    </div>
+                    <div class="order-details-modal-body" id="orderDetailsBody">
+                        <!-- Order details will be populated here -->
+                    </div>
+                    <div class="order-details-modal-footer" id="orderDetailsFooter">
+                        <!-- Action buttons will be added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message View Modal -->
+            <div class="message-modal" id="messageModal">
+                <div class="message-modal-content">
+                    <div class="message-modal-header">
+                        <h3>Customer Message</h3>
+                        <button class="close-message-modal" id="closeMessageModal">&times;</button>
+                    </div>
+                    <div class="message-modal-body" id="messageModalBody">
+                        <!-- Message details will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirm Modal -->
+            <div class="confirm-modal" id="confirmModal">
+                <div class="confirm-modal-content">
+                    <div class="confirm-modal-header">
+                        <h3>Confirm Action</h3>
+                        <button class="close-confirm-modal" id="closeConfirmModal">&times;</button>
+                    </div>
+                    <div class="confirm-modal-body">
+                        <p id="confirmMessage">Are you sure you want to perform this action?</p>
+                    </div>
+                    <div class="confirm-modal-footer">
+                        <button type="button" class="cancel-btn" id="cancelConfirm">Cancel</button>
+                        <button type="button" class="delete-btn" id="confirmAction">Confirm</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIN Verification Modal -->
+            <div class="pin-modal" id="pinModal">
+                <div class="pin-modal-content">
+                    <div class="pin-modal-header">
+                        <h3>Verify PIN</h3>
+                        <button class="close-pin-modal" id="closePinModal">&times;</button>
+                    </div>
+                    <div class="pin-modal-body">
+                        <p>Enter PIN to mark this order as complete:</p>
+                        <input type="text" class="pin-input" id="pinInput" maxlength="6" placeholder="000000">
+                        <div class="pin-error" id="pinError">Incorrect PIN. Please try again.</div>
+                    </div>
+                    <div class="pin-modal-footer">
+                        <button type="button" class="cancel-btn" id="cancelPin">Cancel</button>
+                        <button type="button" class="save-btn" id="verifyPin">Verify PIN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash Payment Modal -->
+            <div class="confirm-modal" id="cashPaymentModal">
+                <div class="confirm-modal-content">
+                    <div class="confirm-modal-header">
+                        <h3>Process Cash Payment</h3>
+                        <button class="close-confirm-modal" id="closeCashPaymentModal">&times;</button>
+                    </div>
+                    <div class="confirm-modal-body">
+                        <div class="cash-payment-summary">
+                            <p><strong>Total Amount:</strong> <span id="cashPaymentTotal">R 0.00</span></p>
+                            <p><strong>Items:</strong></p>
+                            <div id="cashPaymentItems"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="cashAmountReceived">Amount Received (R)</label>
+                            <input type="number" id="cashAmountReceived" min="0" step="0.01"
+                                placeholder="Enter amount received">
+                        </div>
+                        <div class="form-group" id="cashChangeContainer" style="display: none;">
+                            <label>Change:</label>
+                            <p id="cashChangeAmount" style="color: #28a745; font-weight: bold;">R 0.00</p>
+                        </div>
+                    </div>
+                    <div class="confirm-modal-footer">
+                        <button type="button" class="cancel-btn" id="cancelCashPayment">Cancel</button>
+                        <button type="button" class="save-btn" id="confirmCashPayment">Complete Payment</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer id="mainFooter">
+            <p>&copy; 2025 BusyCorner. All rights reserved.</p>
+        </footer>
+
+        <!-- Success Message Toast -->
+        <div class="toast" id="toast"></div>
+    </div>
+</body>
+
+</html>
