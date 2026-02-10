@@ -173,7 +173,6 @@ const todayOrdersChange = document.getElementById('todayOrdersChange');
 const todayRevenue = document.getElementById('todayRevenue');
 const todayRevenueChange = document.getElementById('todayRevenueChange');
 const pendingOrders = document.getElementById('pendingOrders');
-const completedOrders = document.getElementById('completedOrders');
 const yearRevenue = document.getElementById('yearRevenue');
 const downloadStatementBtn = document.getElementById('downloadStatementBtn');
 const monthRevenue = document.getElementById('monthRevenue');
@@ -638,15 +637,11 @@ function updateDashboardStats() {
     const pendingOrdersList = currentOrders.filter(order => order.status === 'pending');
     const pendingCount = pendingOrdersList.length;
     
-    // Get all completed orders count
-    const completedCount = completedOrdersList.length;
-    
     // Update display with requestAnimationFrame for better performance
     requestAnimationFrame(() => {
         if (todayOrders) todayOrders.textContent = todayOrdersCount;
         if (todayRevenue) todayRevenue.textContent = formatCurrency(todayRevenueAmount);
         if (pendingOrders) pendingOrders.textContent = pendingCount;
-        if (completedOrders) completedOrders.textContent = completedCount;
         if (weekRevenue) weekRevenue.textContent = formatCurrency(weeklyRevenueAmount);
         if (weekOrders) weekOrders.textContent = weeklyOrdersCount;
         if (monthRevenue) monthRevenue.textContent = formatCurrency(monthlyRevenueAmount);
@@ -2092,7 +2087,7 @@ window.addEventListener('ordersUpdated', function() {
         if (document.getElementById('orders').classList.contains('active')) {
             displayAllOrders(currentFilterStatus);
         }
-    }, 500);
+    }, 100);
 });
 
 let messageUpdateDebounce = null;
@@ -2104,7 +2099,7 @@ window.addEventListener('messagesUpdated', function() {
         if (document.getElementById('messages').classList.contains('active')) {
             displayMessages();
         }
-    }, 500);
+    }, 100);
 });
 
 // Initial check and resize listener

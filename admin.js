@@ -264,22 +264,21 @@ function loadOrders() {
     }
 }
 
-// Update dashboard stats
+// Update dashboard stats - FOCUS ON CURRENT YEAR ONLY
 function updateDashboardStats() {
     // Get current year
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     
-    // Get completed orders (card + cash)
-    const completedOrdersList = orderManager.getCompletedOrders();
+    // Get completed orders (card + cash) for current year
+    const yearlyOrders = orderManager.getOrdersByYear(currentYear);
     
     // Calculate yearly stats
-    const yearlyOrders = orderManager.getOrdersByYear(currentYear);
     const yearlyStats = statsCalculator.calculateYearlyStats(currentYear, yearlyOrders);
     
-    // Update display
+    // Update display - SHOW ONLY CURRENT YEAR STATS
     requestAnimationFrame(() => {
-        if (completedOrders) completedOrders.textContent = completedOrdersList.length;
+        if (completedOrders) completedOrders.textContent = yearlyStats.orders;
         if (totalProfit) totalProfit.textContent = formatCurrency(yearlyStats.profit);
     });
 }
@@ -529,16 +528,23 @@ window.addEventListener('hashchange', () => {
     }
 });
 
-// Performance-optimized order update listener
+// Performance-optimized order update listener - IMMEDIATE REAL-TIME UPDATES
 let orderUpdateTimeout = null;
 window.addEventListener('ordersUpdated', function() {
-    // Debounce updates to prevent excessive processing
+    // Immediate update for real-time responsiveness
     if (orderUpdateTimeout) clearTimeout(orderUpdateTimeout);
     
+    // Update immediately without debounce for real-time feel
+    loadOrders();
+    updateDashboardStats();
+    
+    // Set a small delay to prevent UI blocking
     orderUpdateTimeout = setTimeout(() => {
-        loadOrders();
-        updateDashboardStats();
-    }, 100);
+        // Force refresh if needed
+        if (document.getElementById('dashboard')?.classList.contains('active')) {
+            updateDashboardStats();
+        }
+    }, 50);
 });
 
 // Initial check and resize listener
