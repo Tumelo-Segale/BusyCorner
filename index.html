@@ -11,7 +11,7 @@
         content="BusyCorner, BusyCorner, Chaneng, restaurant, food, meals, burgers, drinks, South Africa">
     <meta name="author" content="BusyCorner Restaurant">
     <!-- Added Open Graph tags for better sharing -->
-    <meta property="og:title" content="BusyCorner Restaurant - Chaneng">
+    <meta property="og:title" content="BusyCorner Restaurant">
     <meta property="og:description" content="Great food. Warm vibes. Right here in Chaneng.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="./BusyCorner.png">
@@ -62,12 +62,12 @@
         <!-- Sidebar Navigation -->
         <div class="sidebar" id="sidebar">
             <ul class="sidebar-nav">
-                <li><a href="#home" class="nav-link" data-section="home">Home</a></li>
-                <li><a href="#menu" class="nav-link" data-section="menu">Menu</a></li>
+                <li><a href="#menu" class="nav-link active" data-section="menu">Menu</a></li>
                 <li><a href="#orders" class="nav-link protected-nav" data-section="orders">Orders</a></li>
                 <li><a href="#contact" class="nav-link" data-section="contact">Contact</a></li>
                 <li><a href="#profile" class="nav-link protected-nav" data-section="profile">Profile</a></li>
                 <li><a href="#login" class="nav-link login-logout" data-section="login">Login</a></li>
+                <li><a href="#about" class="nav-link" data-section="about">About</a></li>
                 <li><a href="#help" class="nav-link" data-section="help">Help</a></li>
             </ul>
         </div>
@@ -201,65 +201,8 @@
 
         <!-- Main content area -->
         <main id="mainContent">
-            <!-- Home Section -->
-            <section id="home" class="page-section active">
-                <!-- Hero Banner -->
-                <div class="hero">
-                    <div class="hero-overlay">
-                        <p>Great food. Warm vibes. Right here in Chaneng.</p>
-                        <div class="hero-buttons">
-                            <a href="#menu" class="hero-btn">View Menu</a>
-                            <a href="#contact" class="hero-btn outline">Contact Us</a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-content">
-                    <!-- About -->
-                    <div class="home-about">
-                        <h2 style="color: #500000;">BusyCorner Restaurant</h2>
-                        <p>
-                            Welcome to <strong>BusyCorner</strong> - the heart of great kasi food in Chaneng, where
-                            culture, flavor, and community come together.
-                        </p>
-                        <p>Rooted in local tradition and township culture, <strong>BusyCorner</strong> is more than just
-                            a place to eat
-                            it's a place to connect, share stories, and enjoy authentic meals in a warm, familiar space.
-                        </p>
-                        <p>
-                            Whether you're stopping by for a quick bite, enjoying a meal with family, or meeting
-                            friends, <strong>BusyCorner</strong> is your go-to spot for delicious food, generous
-                            portions, and friendly
-                            service.
-                        </p>
-                    </div>
-
-                    <!-- Highlights -->
-                    <div class="feature-grid">
-                        <div class="feature-card">
-                            <h3>Freshly Prepared</h3>
-                            <p>Every meal is made with care, passion, and quality ingredients.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h3>Local Favorites</h3>
-                            <p>Inspired by local tradition and township culture.</p>
-                        </div>
-                        <div class="feature-card">
-                            <h3>Dine-In & Takeaway</h3>
-                            <p>Enjoy your food your way - sit down or grab and go.</p>
-                        </div>
-                    </div>
-
-                    <!-- Operating Hours -->
-                    <div class="hours-card">
-                        <h2>Operating Hours</h2>
-                        <p><strong>Mondays - Sundays:</strong> 10:00 - 21:00</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Menu Section -->
-            <section id="menu" class="page-section">
+            <!-- Menu Section (Now Default Active) -->
+            <section id="menu" class="page-section active">
                 <div class="section-content">
                     <h1>Our Menu</h1>
                     <p>Explore our wide selection of delicious meals prepared with care and passion.</p>
@@ -401,6 +344,56 @@
                             <li>View order history</li>
                             <li>Fast checkout process</li>
                         </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About Section (formerly Home) -->
+            <section id="about" class="page-section">
+                <div class="section-content">
+                    <!-- Hero Banner -->
+                    <div class="hero">
+                    </div>
+
+                    <!-- About -->
+                    <div class="home-about">
+                        <h2 style="color: #500000;">BusyCorner Restaurant</h2>
+                        <p>
+                            Welcome to <strong>BusyCorner</strong> - the heart of great kasi food in Chaneng, where
+                            culture, flavor, and community come together.
+                        </p>
+                        <p>Rooted in local tradition and township culture, <strong>BusyCorner</strong> is more than just
+                            a place to eat
+                            it's a place to connect, share stories, and enjoy authentic meals in a warm, familiar space.
+                        </p>
+                        <p>
+                            Whether you're stopping by for a quick bite, enjoying a meal with family, or meeting
+                            friends, <strong>BusyCorner</strong> is your go-to spot for delicious food, generous
+                            portions, and friendly
+                            service.
+                        </p>
+                    </div>
+
+                    <!-- Highlights -->
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <h3>Freshly Prepared</h3>
+                            <p>Every meal is made with care, passion, and quality ingredients.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Local Favorites</h3>
+                            <p>Inspired by local tradition and township culture.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>Dine-In & Takeaway</h3>
+                            <p>Enjoy your food your way - sit down or grab and go.</p>
+                        </div>
+                    </div>
+
+                    <!-- Operating Hours -->
+                    <div class="hours-card">
+                        <h2>Operating Hours</h2>
+                        <p><strong>Mondays - Sundays:</strong> 10:00 - 21:00</p>
                     </div>
                 </div>
             </section>

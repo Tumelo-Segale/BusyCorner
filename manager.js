@@ -179,6 +179,9 @@ const monthRevenue = document.getElementById('monthRevenue');
 const monthOrders = document.getElementById('monthOrders');
 const weekRevenue = document.getElementById('weekRevenue');
 const weekOrders = document.getElementById('weekOrders');
+const weeklyStatLabel = document.getElementById('weeklyStatLabel');
+const monthlyStatLabel = document.getElementById('monthlyStatLabel');
+const yearlyStatLabel = document.getElementById('yearlyStatLabel');
 
 // Statement modal elements
 const statementModal = document.getElementById('statementModal');
@@ -425,7 +428,7 @@ function showToast(message, type = 'success') {
     if (!toast) return;
     
     toast.textContent = message;
-    toast.style.background = type === 'success' ? '#28a745' : '#800000';
+    toast.style.background = type === 'success' ? '#28a745' : '#500000';
     toast.style.display = 'block';
     
     setTimeout(() => {
@@ -503,6 +506,26 @@ function generateCashOrderId() {
     return `CASH${year}${month}${day}-${randomNum}`;
 }
 
+// Update stat labels with current date information
+function updateStatLabels() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const currentMonth = monthNames[now.getMonth()];
+    
+    if (weeklyStatLabel) {
+        weeklyStatLabel.textContent = `Current week only`;
+    }
+    
+    if (monthlyStatLabel) {
+        monthlyStatLabel.textContent = `${currentMonth} ${currentYear} only`;
+    }
+    
+    if (yearlyStatLabel) {
+        yearlyStatLabel.textContent = `${currentYear} only`;
+    }
+}
+
 // Load orders from main app (including cash orders)
 function loadOrders() {
     try {
@@ -575,6 +598,9 @@ function loadOrders() {
 function updateDashboardStats() {
     // Check and reset stats if needed
     checkAndResetStats();
+    
+    // Update stat labels with current date
+    updateStatLabels();
     
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -700,7 +726,6 @@ function displayFilteredOrders(filteredOrders) {
         const orderElement = document.createElement('div');
         orderElement.className = 'order-item';
         orderElement.dataset.orderId = order.id;
-        // REMOVED customer email display for both card and cash orders
         orderElement.innerHTML = `
             <div class="order-item-header">
                 <h4>${order.orderId || 'Unknown ID'}</h4>
@@ -982,7 +1007,6 @@ function showOrderDetails(order) {
     
     if (!orderDetailsBody || !orderDetailsFooter) return;
     
-    // REMOVED customer email display for both card and cash orders
     orderDetailsBody.innerHTML = `
         <div class="order-details-info">
             <div class="detail-row">
@@ -2084,7 +2108,7 @@ window.addEventListener('ordersUpdated', function() {
     orderUpdateDebounce = setTimeout(() => {
         loadOrders();
         updateDashboardStats();
-        if (document.getElementById('orders').classList.contains('active')) {
+        if (document.getElementById('orders')?.classList.contains('active')) {
             displayAllOrders(currentFilterStatus);
         }
     }, 100);
@@ -2096,7 +2120,7 @@ window.addEventListener('messagesUpdated', function() {
     
     messageUpdateDebounce = setTimeout(() => {
         messages = safeStorage.getJSON('contactMessages') || [];
-        if (document.getElementById('messages').classList.contains('active')) {
+        if (document.getElementById('messages')?.classList.contains('active')) {
             displayMessages();
         }
     }, 100);

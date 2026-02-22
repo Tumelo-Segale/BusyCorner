@@ -381,7 +381,7 @@ function showToast(message, type = 'success') {
     if (!toast) return;
     
     toast.textContent = message;
-    toast.style.background = type === 'success' ? '#28a745' : '#dc3545';
+    toast.style.background = type === 'success' ? '#28a745' : '#500000';
     toast.style.display = 'block';
     
     setTimeout(() => {
@@ -780,6 +780,10 @@ function setActiveSection(sectionId) {
         if (sectionId === 'contact') {
             updateContactForm();
         }
+        
+        if (sectionId === 'about') {
+            // No dynamic data needed for about page
+        }
     }
     
     updateActiveNavLink(sectionId);
@@ -892,9 +896,9 @@ function handleLogout() {
     saveCartToStorage();
     updateNavigation();
     showToast('Logged out successfully');
-    setActiveSection('home');
+    setActiveSection('menu');
     closeSidebar();
-    window.location.hash = 'home';
+    window.location.hash = 'menu';
     closeLogoutConfirmModal();
 }
 
@@ -1052,8 +1056,8 @@ function deleteUserProfile() {
     saveCartToStorage();
     updateNavigation();
     showToast('Profile deleted successfully');
-    setActiveSection('home');
-    window.location.hash = 'home';
+    setActiveSection('menu');
+    window.location.hash = 'menu';
     closeDeleteConfirmModal();
 }
 
@@ -1445,7 +1449,7 @@ function handleInitialLoad() {
     updateContactForm();
     
     const hash = window.location.hash.substring(1);
-    const validSections = ['home', 'menu', 'orders', 'contact', 'profile', 'login', 'help'];
+    const validSections = ['menu', 'orders', 'contact', 'profile', 'login', 'about', 'help'];
     
     if (hash === 'logout') {
         showLogoutConfirmModal();
@@ -1455,14 +1459,14 @@ function handleInitialLoad() {
     if (hash && validSections.includes(hash)) {
         setActiveSection(hash);
     } else {
-        setActiveSection('home');
-        window.location.hash = 'home';
+        setActiveSection('menu');
+        window.location.hash = 'menu';
     }
 }
 
 window.addEventListener('hashchange', () => {
     const hash = window.location.hash.substring(1);
-    const validSections = ['home', 'menu', 'orders', 'contact', 'profile', 'login', 'help'];
+    const validSections = ['menu', 'orders', 'contact', 'profile', 'login', 'about', 'help'];
     
     if (hash === 'logout') {
         showLogoutConfirmModal();
@@ -1534,7 +1538,7 @@ document.querySelectorAll('form').forEach(form => {
                 updateContactForm();
                 showToast('Login successful!');
                 showLoginForm();
-                setActiveSection('home');
+                setActiveSection('menu');
                 updateCartVisibility();
             } else {
                 if (email === 'manager@BusyCorner.com' && password === 'manager123') {
@@ -1596,7 +1600,7 @@ document.querySelectorAll('form').forEach(form => {
             updateContactForm();
             showToast('Registration successful!');
             showLoginForm();
-            setActiveSection('home');
+            setActiveSection('menu');
             
             this.reset();
         }

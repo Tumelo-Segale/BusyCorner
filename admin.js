@@ -29,6 +29,7 @@ const sections = document.querySelectorAll('.page-section');
 // Dashboard elements
 const completedOrders = document.getElementById('completedOrders');
 const totalProfit = document.getElementById('totalProfit');
+const yearlyStatLabel = document.getElementById('yearlyStatLabel');
 
 // Details elements
 const adminForm = document.getElementById('adminForm');
@@ -205,11 +206,6 @@ function formatCurrency(amount) {
     return `R${parseFloat(amount).toFixed(2)}`;
 }
 
-// Calculate 5% profit
-function calculateProfit(amount) {
-    return parseFloat((amount * 0.05).toFixed(2));
-}
-
 // Format date to DD MMM YYYY (date only, no time)
 function formatDate(dateString) {
     try {
@@ -264,11 +260,16 @@ function loadOrders() {
     }
 }
 
-// Update dashboard stats - FOCUS ON CURRENT YEAR ONLY
+// Update dashboard stats - SHOW CURRENT YEAR ONLY WITH DYNAMIC YEAR DISPLAY
 function updateDashboardStats() {
     // Get current year
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
+    
+    // Update the stat label with current year
+    if (yearlyStatLabel) {
+        yearlyStatLabel.textContent = `Completed orders for ${currentYear}`;
+    }
     
     // Get completed orders (card + cash) for current year
     const yearlyOrders = orderManager.getOrdersByYear(currentYear);
@@ -276,7 +277,7 @@ function updateDashboardStats() {
     // Calculate yearly stats
     const yearlyStats = statsCalculator.calculateYearlyStats(currentYear, yearlyOrders);
     
-    // Update display - SHOW ONLY CURRENT YEAR STATS
+    // Update display
     requestAnimationFrame(() => {
         if (completedOrders) completedOrders.textContent = yearlyStats.orders;
         if (totalProfit) totalProfit.textContent = formatCurrency(yearlyStats.profit);
@@ -528,13 +529,13 @@ window.addEventListener('hashchange', () => {
     }
 });
 
-// Performance-optimized order update listener - IMMEDIATE REAL-TIME UPDATES
+// Performance-optimized order update listener
 let orderUpdateTimeout = null;
 window.addEventListener('ordersUpdated', function() {
     // Immediate update for real-time responsiveness
     if (orderUpdateTimeout) clearTimeout(orderUpdateTimeout);
     
-    // Update immediately without debounce for real-time feel
+    // Update immediately
     loadOrders();
     updateDashboardStats();
     

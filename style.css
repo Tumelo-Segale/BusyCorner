@@ -766,7 +766,7 @@ nav {
   margin-bottom: 8px;
 }
 
-/* Home Section */
+/* About Section (formerly Home) */
 .feature-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -801,7 +801,7 @@ nav {
 /* Hero Banner */
 .hero {
   height: 30vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.3)),
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
     url("./BusyCorner.png") center/contain no-repeat;
   position: relative;
   border-radius: 4px;
