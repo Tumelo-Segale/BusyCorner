@@ -1533,7 +1533,7 @@ function showStatementModal() {
     }
 }
 
-// Download statement as Excel file - REMOVED Payment Type column
+// Download statement as Excel file - FIXED sheet name length
 function downloadStatement(statementTypeValue, includeProfitCalc) {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -1557,7 +1557,7 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
         const endStr = `${weekEnd.getDate().toString().padStart(2, '0')}-${(weekEnd.getMonth() + 1).toString().padStart(2, '0')}`;
         
         fileName = `BusyCorner_Statement_Week_${startStr}_to_${endStr}_${currentYear}`;
-        sheetName = `Statement_Week_${startStr}_to_${endStr}_${currentYear}`;
+        sheetName = `Week_${startStr}_${endStr}_${currentYear}`; // Shortened to prevent >31 chars
         title = `BusyCorner - Week ${startStr} to ${endStr} ${currentYear} - Statement`;
     } else if (statementTypeValue === 'monthly') {
         // Get first and last day of current month
@@ -1568,7 +1568,7 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const monthName = monthNames[currentMonth];
         fileName = `BusyCorner_Statement_${monthName}_${currentYear}`;
-        sheetName = `Statement_${monthName}_${currentYear}`;
+        sheetName = `${monthName}_${currentYear}`; // Shortened to prevent >31 chars
         title = `BusyCorner - ${monthName} ${currentYear} - Statement`;
     } else {
         // Get first and last day of current year
@@ -1577,7 +1577,7 @@ function downloadStatement(statementTypeValue, includeProfitCalc) {
         
         filteredOrders = orderManager.getOrdersByDateRange(firstDay, lastDay);
         fileName = `BusyCorner_Statement_${currentYear}`;
-        sheetName = `Statement_${currentYear}`;
+        sheetName = `Year_${currentYear}`; // Shortened to prevent >31 chars
         title = `BusyCorner - ${currentYear} - Statement`;
     }
     
