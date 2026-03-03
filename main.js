@@ -916,7 +916,7 @@ function showRegisterForm() {
     if (!formTitle || !formSubtitle || !loginForm || !registerForm) return;
     
     formTitle.textContent = 'Register';
-    formSubtitle.textContent = 'Create your account to make online orders and enjoy exclusive benefits.';
+    formSubtitle.textContent = 'Create your account to make online orders and more.';
     loginForm.classList.remove('active-form');
     registerForm.classList.add('active-form');
 }

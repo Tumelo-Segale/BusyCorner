@@ -514,15 +514,15 @@ function updateStatLabels() {
     const currentMonth = monthNames[now.getMonth()];
     
     if (weeklyStatLabel) {
-        weeklyStatLabel.textContent = `Current week only`;
+        weeklyStatLabel.textContent = `Current Week Only`;
     }
     
     if (monthlyStatLabel) {
-        monthlyStatLabel.textContent = `${currentMonth} ${currentYear} only`;
+        monthlyStatLabel.textContent = `${currentMonth} ${currentYear} Only`;
     }
     
     if (yearlyStatLabel) {
-        yearlyStatLabel.textContent = `${currentYear} only`;
+        yearlyStatLabel.textContent = `${currentYear} Only`;
     }
 }
 

@@ -268,7 +268,7 @@ function updateDashboardStats() {
     
     // Update the stat label with current year
     if (yearlyStatLabel) {
-        yearlyStatLabel.textContent = `Completed orders for ${currentYear}`;
+        yearlyStatLabel.textContent = `Completed Orders For ${currentYear}`;
     }
     
     // Get completed orders (card + cash) for current year
