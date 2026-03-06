@@ -735,7 +735,7 @@ nav {
 /* Page Sections */
 .page-section {
   display: none;
-  padding: 70px 1rem 60px;
+  padding: 70px 1rem 20px;
   min-height: calc(100dvh - 60px);
   animation: fadeIn 0.5s ease;
 }
@@ -1092,6 +1092,7 @@ nav {
 
 .form-links a {
   color: #500000;
+  font-weight: bold;
   text-decoration: none;
   display: block;
   margin-bottom: 0.5rem;
@@ -1265,26 +1266,6 @@ nav {
   line-height: 1.5;
 }
 
-/* Footer */
-footer {
-  background: #500000;
-  color: white;
-  padding: 4px;
-  position: fixed;
-  border-top: 1px solid white;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 998;
-}
-
-footer p {
-  text-align: center;
-  padding-top: 0px;
-  color: white;
-  font-size: 16px;
-}
-
 /* Toast Messages */
 .toast {
   position: fixed;
@@ -1344,7 +1325,7 @@ footer p {
   }
 
   .page-section {
-    padding: 80px 1.5rem 70px;
+    padding: 80px 1.5rem 30px;
   }
 
   .feature-grid {
