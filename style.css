@@ -1501,3 +1501,99 @@ body {
   width: 120px;
   transition: background 0.3s ease;
 }
+
+/* Forgot Password Modal */
+.forgot-password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.forgot-password-modal.active {
+  display: flex;
+}
+
+.forgot-password-modal-content {
+  background: white;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80dvh;
+  overflow-y: auto;
+  border: 1px solid #500000;
+}
+
+.forgot-password-modal-header {
+  background: #500000;
+  color: white;
+  padding: 16px;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-password-modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.close-forgot-modal {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.forgot-password-modal-body {
+  padding: 20px;
+}
+
+.forgot-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.forgot-step p {
+  text-align: center;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.pin-timer {
+  text-align: center;
+  color: #500000;
+  font-weight: bold;
+  font-size: 1rem;
+  margin: 10px 0;
+}
+
+#forgotEmailDisplay {
+  font-weight: bold;
+  color: #500000;
+}
+
+/* Forgot password link */
+.forgot-password-link {
+  color: blue;
+  font-weight: normal;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}

@@ -1,605 +1,842 @@
 // Storage availability check and initialization
-(function() {
-    // Check if we're in a browser environment
-    if (typeof window === 'undefined') return;
-    
-    // Initialize storage if not available
-    if (typeof localStorage === 'undefined' || !window.localStorage) {
-        console.warn('localStorage is not available. Initializing fallback storage.');
-        window.localStorage = {
-            _data: {},
-            setItem: function(id, val) {
-                try {
-                    this._data[id] = String(val);
-                    return true;
-                } catch (e) {
-                    console.error('Error setting localStorage item:', e);
-                    return false;
-                }
-            },
-            getItem: function(id) {
-                return this._data.hasOwnProperty(id) ? this._data[id] : null;
-            },
-            removeItem: function(id) {
-                try {
-                    delete this._data[id];
-                    return true;
-                } catch (e) {
-                    console.error('Error removing localStorage item:', e);
-                    return false;
-                }
-            },
-            clear: function() {
-                try {
-                    this._data = {};
-                    return true;
-                } catch (e) {
-                    console.error('Error clearing localStorage:', e);
-                    return false;
-                }
-            },
-            key: function(index) {
-                const keys = Object.keys(this._data);
-                return index >= 0 && index < keys.length ? keys[index] : null;
-            },
-            get length() {
-                return Object.keys(this._data).length;
-            }
-        };
-    }
-    
-    // Initialize sessionStorage if not available
-    if (typeof sessionStorage === 'undefined' || !window.sessionStorage) {
-        console.warn('sessionStorage is not available. Initializing fallback storage.');
-        window.sessionStorage = {
-            _data: {},
-            setItem: function(id, val) {
-                try {
-                    this._data[id] = String(val);
-                    return true;
-                } catch (e) {
-                    console.error('Error setting sessionStorage item:', e);
-                    return false;
-                }
-            },
-            getItem: function(id) {
-                return this._data.hasOwnProperty(id) ? this._data[id] : null;
-            },
-            removeItem: function(id) {
-                try {
-                    delete this._data[id];
-                    return true;
-                } catch (e) {
-                    console.error('Error removing sessionStorage item:', e);
-                    return false;
-                }
-            },
-            clear: function() {
-                try {
-                    this._data = {};
-                    return true;
-                } catch (e) {
-                    console.error('Error clearing sessionStorage:', e);
-                    return false;
-                }
-            },
-            key: function(index) {
-                const keys = Object.keys(this._data);
-                return index >= 0 && index < keys.length ? keys[index] : null;
-            },
-            get length() {
-                return Object.keys(this._data).length;
-            }
-        };
-    }
+(function () {
+  // Check if we're in a browser environment
+  if (typeof window === "undefined") return;
+
+  // Initialize storage if not available
+  if (typeof localStorage === "undefined" || !window.localStorage) {
+    console.warn(
+      "localStorage is not available. Initializing fallback storage."
+    );
+    window.localStorage = {
+      _data: {},
+      setItem: function (id, val) {
+        try {
+          this._data[id] = String(val);
+          return true;
+        } catch (e) {
+          console.error("Error setting localStorage item:", e);
+          return false;
+        }
+      },
+      getItem: function (id) {
+        return this._data.hasOwnProperty(id) ? this._data[id] : null;
+      },
+      removeItem: function (id) {
+        try {
+          delete this._data[id];
+          return true;
+        } catch (e) {
+          console.error("Error removing localStorage item:", e);
+          return false;
+        }
+      },
+      clear: function () {
+        try {
+          this._data = {};
+          return true;
+        } catch (e) {
+          console.error("Error clearing localStorage:", e);
+          return false;
+        }
+      },
+      key: function (index) {
+        const keys = Object.keys(this._data);
+        return index >= 0 && index < keys.length ? keys[index] : null;
+      },
+      get length() {
+        return Object.keys(this._data).length;
+      },
+    };
+  }
+
+  // Initialize sessionStorage if not available
+  if (typeof sessionStorage === "undefined" || !window.sessionStorage) {
+    console.warn(
+      "sessionStorage is not available. Initializing fallback storage."
+    );
+    window.sessionStorage = {
+      _data: {},
+      setItem: function (id, val) {
+        try {
+          this._data[id] = String(val);
+          return true;
+        } catch (e) {
+          console.error("Error setting sessionStorage item:", e);
+          return false;
+        }
+      },
+      getItem: function (id) {
+        return this._data.hasOwnProperty(id) ? this._data[id] : null;
+      },
+      removeItem: function (id) {
+        try {
+          delete this._data[id];
+          return true;
+        } catch (e) {
+          console.error("Error removing sessionStorage item:", e);
+          return false;
+        }
+      },
+      clear: function () {
+        try {
+          this._data = {};
+          return true;
+        } catch (e) {
+          console.error("Error clearing sessionStorage:", e);
+          return false;
+        }
+      },
+      key: function (index) {
+        const keys = Object.keys(this._data);
+        return index >= 0 && index < keys.length ? keys[index] : null;
+      },
+      get length() {
+        return Object.keys(this._data).length;
+      },
+    };
+  }
 })();
 
-// Performance-optimized Order Manager
+// Performance-optimized Order Manager for 200+ orders per minute
 class OrderManager {
-    constructor() {
-        this.orders = [];
-        this.orderMap = new Map();
-        this.userOrderMap = new Map();
-        this.initialized = false;
-    }
-    
-    init(orders) {
-        this.orders = orders || [];
-        this.orderMap.clear();
-        this.userOrderMap.clear();
-        
-        this.orders.forEach(order => {
-            if (order.id) {
-                this.orderMap.set(order.id, order);
-                
-                // Index by user email for faster user-specific queries
-                // Only index card orders (not cash orders)
-                if (order.userEmail && order.userEmail !== 'cash@payment.com') {
-                    if (!this.userOrderMap.has(order.userEmail)) {
-                        this.userOrderMap.set(order.userEmail, []);
-                    }
-                    this.userOrderMap.get(order.userEmail).push(order);
-                }
+  constructor() {
+    this.orders = [];
+    this.orderMap = new Map();
+    this.userOrderMap = new Map();
+    this.statusCache = null;
+    this.pendingQueue = [];
+    this.processingQueue = false;
+    this.initialized = false;
+    this.stats = {
+      ordersPerMinute: 0,
+      lastMinuteCount: 0,
+      lastResetTime: Date.now(),
+    };
+  }
+
+  init(orders) {
+    this.orders = orders || [];
+    this.orderMap.clear();
+    this.userOrderMap.clear();
+    this.statusCache = null;
+
+    // Use batch processing for large datasets
+    const batchSize = 100;
+    const processBatch = (startIndex) => {
+      const endIndex = Math.min(startIndex + batchSize, this.orders.length);
+      for (let i = startIndex; i < endIndex; i++) {
+        const order = this.orders[i];
+        if (order.id) {
+          this.orderMap.set(order.id, order);
+
+          // Index by normalized email for case-insensitive queries
+          if (order.userEmail && order.userEmail !== "cash@payment.com") {
+            const normalizedEmail = order.userEmail.toLowerCase();
+            if (!this.userOrderMap.has(normalizedEmail)) {
+              this.userOrderMap.set(normalizedEmail, []);
             }
-        });
-        this.initialized = true;
+            this.userOrderMap.get(normalizedEmail).push(order);
+          }
+        }
+      }
+
+      if (endIndex < this.orders.length) {
+        setTimeout(() => processBatch(endIndex), 0);
+      }
+    };
+
+    processBatch(0);
+    this.initialized = true;
+  }
+
+  // Track orders per minute
+  trackOrder() {
+    const now = Date.now();
+    if (now - this.stats.lastResetTime > 60000) {
+      this.stats.ordersPerMinute = 1;
+      this.stats.lastResetTime = now;
+    } else {
+      this.stats.ordersPerMinute++;
     }
-    
-    addOrder(order) {
-        if (!order.id) order.id = Date.now();
-        
-        // Add to orders array
-        this.orders.unshift(order);
-        this.orderMap.set(order.id, order);
-        
-        // Update user index (only for non-cash orders)
-        if (order.userEmail && order.userEmail !== 'cash@payment.com') {
-            if (!this.userOrderMap.has(order.userEmail)) {
-                this.userOrderMap.set(order.userEmail, []);
+    return this.stats.ordersPerMinute <= 200; // Return false if exceeding 200/minute
+  }
+
+  // Queue orders for processing to handle high load
+  queueOrder(order) {
+    return new Promise((resolve) => {
+      this.pendingQueue.push({ order, resolve });
+      if (!this.processingQueue) {
+        this.processQueue();
+      }
+    });
+  }
+
+  processQueue() {
+    this.processingQueue = true;
+    const processNext = () => {
+      if (this.pendingQueue.length === 0) {
+        this.processingQueue = false;
+        return;
+      }
+
+      const batch = this.pendingQueue.splice(0, 10); // Process 10 at a time
+      batch.forEach(({ order, resolve }) => {
+        this.addOrder(order);
+        resolve(order);
+      });
+
+      setTimeout(processNext, 50); // Small delay to prevent blocking
+    };
+
+    processNext();
+  }
+
+  addOrder(order) {
+    if (!this.trackOrder()) {
+      console.warn("Order rate limit exceeded (200/min)");
+      return null;
+    }
+
+    if (!order.id) order.id = Date.now();
+
+    // Check if order already exists
+    if (!this.orderMap.has(order.id)) {
+      this.orders.unshift(order);
+      this.orderMap.set(order.id, order);
+
+      // Update user index with normalized email
+      if (order.userEmail && order.userEmail !== "cash@payment.com") {
+        const normalizedEmail = order.userEmail.toLowerCase();
+        if (!this.userOrderMap.has(normalizedEmail)) {
+          this.userOrderMap.set(normalizedEmail, []);
+        }
+        this.userOrderMap.get(normalizedEmail).unshift(order);
+      }
+
+      this.statusCache = null;
+
+      // Performance: Keep only last 10,000 orders in memory (increased for higher load)
+      if (this.orders.length > 10000) {
+        const removed = this.orders.pop();
+        if (removed.id) {
+          this.orderMap.delete(removed.id);
+
+          // Remove from user index
+          if (removed.userEmail && removed.userEmail !== "cash@payment.com") {
+            const normalizedEmail = removed.userEmail.toLowerCase();
+            const userOrders = this.userOrderMap.get(normalizedEmail);
+            if (userOrders) {
+              const index = userOrders.findIndex((o) => o.id === removed.id);
+              if (index > -1) userOrders.splice(index, 1);
+              if (userOrders.length === 0) {
+                this.userOrderMap.delete(normalizedEmail);
+              }
             }
-            this.userOrderMap.get(order.userEmail).unshift(order);
+          }
         }
-        
-        // Performance: Keep only last 5,000 orders in memory
-        if (this.orders.length > 5000) {
-            const removed = this.orders.pop();
-            if (removed.id) {
-                this.orderMap.delete(removed.id);
-                
-                // Remove from user index
-                if (removed.userEmail && removed.userEmail !== 'cash@payment.com') {
-                    const userOrders = this.userOrderMap.get(removed.userEmail);
-                    if (userOrders) {
-                        const index = userOrders.findIndex(o => o.id === removed.id);
-                        if (index > -1) userOrders.splice(index, 1);
-                        if (userOrders.length === 0) {
-                            this.userOrderMap.delete(removed.userEmail);
-                        }
-                    }
-                }
-            }
-        }
+      }
     }
-    
-    getOrder(id) {
-        return this.orderMap.get(id);
+
+    return order;
+  }
+
+  getOrder(id) {
+    return this.orderMap.get(id);
+  }
+
+  getUserOrders(email) {
+    if (!email) return [];
+    const normalizedEmail = email.toLowerCase();
+    // Only return card orders for customers (not cash orders)
+    return this.userOrderMap.get(normalizedEmail) || [];
+  }
+
+  getOrdersByStatus(status) {
+    // Use caching for status-based queries
+    if (
+      this.statusCache &&
+      this.statusCache.status === status &&
+      Date.now() - this.statusCache.timestamp < 5000
+    ) {
+      return this.statusCache.orders;
     }
-    
-    getUserOrders(email) {
-        // Only return card orders for customers (not cash orders)
-        return this.userOrderMap.get(email) || [];
+
+    const orders = this.orders.filter((order) => order.status === status);
+
+    this.statusCache = {
+      status: status,
+      orders: orders,
+      timestamp: Date.now(),
+    };
+
+    return orders;
+  }
+
+  updateOrderStatus(id, status) {
+    const order = this.orderMap.get(id);
+    if (order) {
+      order.status = status;
+
+      // Invalidate status cache
+      this.statusCache = null;
+
+      return true;
     }
-    
-    getOrdersByStatus(status) {
-        // Use caching for status-based queries
-        if (this.statusCache && this.statusCache.status === status && 
-            Date.now() - this.statusCache.timestamp < 5000) {
-            return this.statusCache.orders;
-        }
-        
-        const orders = this.orders.filter(order => order.status === status);
-        
-        this.statusCache = {
-            status: status,
-            orders: orders,
-            timestamp: Date.now()
-        };
-        
-        return orders;
-    }
-    
-    updateOrderStatus(id, status) {
-        const order = this.orderMap.get(id);
-        if (order) {
-            order.status = status;
-            
-            // Invalidate status cache
-            this.statusCache = null;
-            
-            return true;
-        }
-        return false;
-    }
+    return false;
+  }
+
+  searchOrders(searchTerm, status = null) {
+    const term = searchTerm.toLowerCase();
+    return this.orders.filter((order) => {
+      if (status && order.status !== status) return false;
+      return order.orderId && order.orderId.toLowerCase().includes(term);
+    });
+  }
 }
 
 const orderManager = new OrderManager();
 
 // Safe localStorage wrapper functions
 const safeStorage = {
-    getItem: function(key) {
-        try {
-            return localStorage.getItem(key);
-        } catch (e) {
-            console.error('Error getting from localStorage:', e);
-            return null;
-        }
-    },
-    
-    setItem: function(key, value) {
-        try {
-            localStorage.setItem(key, value);
-            return true;
-        } catch (e) {
-            console.error('Error setting to localStorage:', e);
-            return false;
-        }
-    },
-    
-    removeItem: function(key) {
-        try {
-            localStorage.removeItem(key);
-            return true;
-        } catch (e) {
-            console.error('Error removing from localStorage:', e);
-            return false;
-        }
-    },
-    
-    getJSON: function(key) {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : null;
-        } catch (e) {
-            console.error('Error parsing JSON from localStorage:', e);
-            return null;
-        }
-    },
-    
-    setJSON: function(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-            return true;
-        } catch (e) {
-            console.error('Error stringifying JSON to localStorage:', e);
-            return false;
-        }
+  getItem: function (key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.error("Error getting from localStorage:", e);
+      return null;
     }
+  },
+
+  setItem: function (key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      console.error("Error setting to localStorage:", e);
+      return false;
+    }
+  },
+
+  removeItem: function (key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (e) {
+      console.error("Error removing from localStorage:", e);
+      return false;
+    }
+  },
+
+  getJSON: function (key) {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (e) {
+      console.error("Error parsing JSON from localStorage:", e);
+      return null;
+    }
+  },
+
+  setJSON: function (key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.error("Error stringifying JSON to localStorage:", e);
+      return false;
+    }
+  },
 };
 
+// Email helper functions for case-insensitive operations
+const emailHelper = {
+  normalize: function (email) {
+    return email ? email.toLowerCase().trim() : "";
+  },
+
+  compare: function (email1, email2) {
+    return this.normalize(email1) === this.normalize(email2);
+  },
+
+  findUserByEmail: function (users, email) {
+    if (!users || !Array.isArray(users) || !email) return null;
+    const normalizedEmail = this.normalize(email);
+    return users.find(
+      (u) => u.email && this.normalize(u.email) === normalizedEmail
+    );
+  },
+
+  findUserIndex: function (users, email) {
+    if (!users || !Array.isArray(users) || !email) return -1;
+    const normalizedEmail = this.normalize(email);
+    return users.findIndex(
+      (u) => u.email && this.normalize(u.email) === normalizedEmail
+    );
+  },
+};
+
+// PIN generation and management for password reset
+const pinManager = {
+  pins: new Map(),
+
+  generatePin: function (email) {
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 600000; // 10 minutes
+    const normalizedEmail = emailHelper.normalize(email);
+    this.pins.set(normalizedEmail, { pin, expiresAt });
+    return pin;
+  },
+
+  verifyPin: function (email, enteredPin) {
+    const normalizedEmail = emailHelper.normalize(email);
+    const pinData = this.pins.get(normalizedEmail);
+    if (!pinData) return false;
+    if (Date.now() > pinData.expiresAt) {
+      this.pins.delete(normalizedEmail);
+      return false;
+    }
+    return pinData.pin === enteredPin;
+  },
+
+  clearPin: function (email) {
+    const normalizedEmail = emailHelper.normalize(email);
+    this.pins.delete(normalizedEmail);
+  },
+};
+
+// Simulated email sending function (would connect to actual email service in production)
+function sendPasswordResetEmail(toEmail, userName, pin) {
+  console.log(`Sending email to: ${toEmail}`);
+  console.log(`Subject: Password Reset Request - BusyCorner Restaurant`);
+  console.log(`
+To ${userName}
+
+You requested a password change of your BusyCorner Restaurant Account. The PIN to allow the password change is below.
+
+Email: ${toEmail}
+PIN: ${pin}
+
+Do not reply to this email address as it is automated and therefore not monitored.
+
+Thank you
+BusyCorner Restaurant
+    `);
+
+  // In a real implementation, you would use an email API here
+  // For demo purposes, we'll store in localStorage for the demo
+  const sentPins = safeStorage.getJSON("sentResetPins") || {};
+  sentPins[emailHelper.normalize(toEmail)] = {
+    pin: pin,
+    userName: userName,
+    timestamp: Date.now(),
+  };
+  safeStorage.setJSON("sentResetPins", sentPins);
+
+  return true;
+}
+
 // Get DOM elements
-const hamburgerBtn = document.getElementById('hamburgerBtn');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const navLinks = document.querySelectorAll('.nav-link');
-const sections = document.querySelectorAll('.page-section');
-const protectedSections = document.querySelectorAll('.protected-section');
-const protectedNavLinks = document.querySelectorAll('.protected-nav');
-const loginLogoutLink = document.querySelector('.login-logout');
+const hamburgerBtn = document.getElementById("hamburgerBtn");
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const navLinks = document.querySelectorAll(".nav-link");
+const sections = document.querySelectorAll(".page-section");
+const protectedSections = document.querySelectorAll(".protected-section");
+const protectedNavLinks = document.querySelectorAll(".protected-nav");
+const loginLogoutLink = document.querySelector(".login-logout");
 
 // Cart elements
-const cartContainer = document.getElementById('cartContainer');
-const cartBtn = document.getElementById('cartBtn');
-const cartModal = document.getElementById('cartModal');
-const closeCart = document.getElementById('closeCart');
-const cartItems = document.getElementById('cartItems');
-const cartCount = document.getElementById('cartCount');
-const totalAmount = document.getElementById('totalAmount');
-const checkoutBtn = document.getElementById('checkoutBtn');
+const cartContainer = document.getElementById("cartContainer");
+const cartBtn = document.getElementById("cartBtn");
+const cartModal = document.getElementById("cartModal");
+const closeCart = document.getElementById("closeCart");
+const cartItems = document.getElementById("cartItems");
+const cartCount = document.getElementById("cartCount");
+const totalAmount = document.getElementById("totalAmount");
+const checkoutBtn = document.getElementById("checkoutBtn");
 
 // Order elements
-const orderModal = document.getElementById('orderModal');
-const closeOrderModal = document.getElementById('closeOrderModal');
-const orderModalBody = document.getElementById('orderModalBody');
-const ordersContainer = document.getElementById('ordersContainer');
+const orderModal = document.getElementById("orderModal");
+const closeOrderModal = document.getElementById("closeOrderModal");
+const orderModalBody = document.getElementById("orderModalBody");
+const ordersContainer = document.getElementById("ordersContainer");
 
 // Form elements
-const formTitle = document.getElementById('formTitle');
-const formSubtitle = document.getElementById('formSubtitle');
-const showRegister = document.getElementById('showRegister');
-const showLogin = document.getElementById('showLogin');
-const loginForm = document.querySelector('.login-form');
-const registerForm = document.querySelector('.register-form');
+const formTitle = document.getElementById("formTitle");
+const formSubtitle = document.getElementById("formSubtitle");
+const showRegister = document.getElementById("showRegister");
+const showLogin = document.getElementById("showLogin");
+const loginForm = document.querySelector(".login-form");
+const registerForm = document.querySelector(".register-form");
 
 // Menu elements
-const filterBtns = document.querySelectorAll('.filter-btn');
-const menuCategories = document.querySelectorAll('.menu-category');
-const menuSearch = document.getElementById('menuSearch');
+const filterBtns = document.querySelectorAll(".filter-btn");
+const menuCategories = document.querySelectorAll(".menu-category");
+const menuSearch = document.getElementById("menuSearch");
 
 // Profile elements
-const profileName = document.getElementById('profileName');
-const profileEmail = document.getElementById('profileEmail');
-const profilePhone = document.getElementById('profilePhone');
-const editProfileBtn = document.getElementById('editProfileBtn');
-const deleteProfileBtn = document.getElementById('deleteProfileBtn');
+const profileName = document.getElementById("profileName");
+const profileEmail = document.getElementById("profileEmail");
+const profilePhone = document.getElementById("profilePhone");
+const editProfileBtn = document.getElementById("editProfileBtn");
+const deleteProfileBtn = document.getElementById("deleteProfileBtn");
 
 // Contact form elements
-const contactNameInput = document.getElementById('contactName');
-const contactEmailInput = document.getElementById('contactEmail');
-const contactMessageInput = document.getElementById('contactMessage');
+const contactNameInput = document.getElementById("contactName");
+const contactEmailInput = document.getElementById("contactEmail");
+const contactMessageInput = document.getElementById("contactMessage");
 
 // Profile edit modal elements
-const profileEditModal = document.getElementById('profileEditModal');
-const closeProfileEditModal = document.getElementById('closeProfileEditModal');
-const cancelProfileEdit = document.getElementById('cancelProfileEdit');
-const saveProfileBtn = document.getElementById('saveProfileBtn');
-const editNameInput = document.getElementById('editName');
-const editEmailInput = document.getElementById('editEmail');
-const editPhoneInput = document.getElementById('editPhone');
-const currentPasswordInput = document.getElementById('currentPassword');
-const newPasswordInput = document.getElementById('newPassword');
-const confirmPasswordInput = document.getElementById('confirmPassword');
+const profileEditModal = document.getElementById("profileEditModal");
+const closeProfileEditModal = document.getElementById("closeProfileEditModal");
+const cancelProfileEdit = document.getElementById("cancelProfileEdit");
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+const editNameInput = document.getElementById("editName");
+const editEmailInput = document.getElementById("editEmail");
+const editPhoneInput = document.getElementById("editPhone");
+const currentPasswordInput = document.getElementById("currentPassword");
+const newPasswordInput = document.getElementById("newPassword");
+const confirmPasswordInput = document.getElementById("confirmPassword");
 
 // Delete confirmation modal
-const deleteConfirmModal = document.getElementById('deleteConfirmModal');
-const closeDeleteModal = document.getElementById('closeDeleteModal');
-const cancelDelete = document.getElementById('cancelDelete');
-const confirmDelete = document.getElementById('confirmDelete');
+const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+const closeDeleteModal = document.getElementById("closeDeleteModal");
+const cancelDelete = document.getElementById("cancelDelete");
+const confirmDelete = document.getElementById("confirmDelete");
 
 // Logout confirmation modal for customer site
-const logoutConfirmModal = document.getElementById('logoutConfirmModal');
-const closeLogoutModal = document.getElementById('closeLogoutModal');
-const cancelLogout = document.getElementById('cancelLogout');
-const confirmLogout = document.getElementById('confirmLogout');
+const logoutConfirmModal = document.getElementById("logoutConfirmModal");
+const closeLogoutModal = document.getElementById("closeLogoutModal");
+const cancelLogout = document.getElementById("cancelLogout");
+const confirmLogout = document.getElementById("confirmLogout");
+
+// Forgot Password Modal elements
+const forgotPasswordModal = document.getElementById("forgotPasswordModal");
+const closeForgotModal = document.getElementById("closeForgotModal");
+const forgotStep1 = document.getElementById("forgotStep1");
+const forgotStep2 = document.getElementById("forgotStep2");
+const forgotStep3 = document.getElementById("forgotStep3");
+const forgotEmail = document.getElementById("forgotEmail");
+const forgotEmailDisplay = document.getElementById("forgotEmailDisplay");
+const forgotPin = document.getElementById("forgotPin");
+const forgotNewPassword = document.getElementById("forgotNewPassword");
+const forgotConfirmPassword = document.getElementById("forgotConfirmPassword");
+const forgotNextBtn = document.getElementById("forgotNextBtn");
+const forgotVerifyBtn = document.getElementById("forgotVerifyBtn");
+const forgotResendBtn = document.getElementById("forgotResendBtn");
+const forgotConfirmBtn = document.getElementById("forgotConfirmBtn");
+const pinTimer = document.getElementById("pinTimer");
 
 // Toast element
-const toast = document.getElementById('toast');
+const toast = document.getElementById("toast");
 
 // State - Using safeStorage wrapper
-let cart = safeStorage.getJSON('cart') || [];
-let currentUser = safeStorage.getJSON('currentUser') || null;
-let orders = safeStorage.getJSON('orders') || [];
-let menuItems = safeStorage.getJSON('menuItems') || [];
-let contactMessages = safeStorage.getJSON('contactMessages') || [];
-let cashOrders = safeStorage.getJSON('cashOrders') || [];
+let cart = safeStorage.getJSON("cart") || [];
+let currentUser = safeStorage.getJSON("currentUser") || null;
+let orders = safeStorage.getJSON("orders") || [];
+let menuItems = safeStorage.getJSON("menuItems") || [];
+let contactMessages = safeStorage.getJSON("contactMessages") || [];
+let cashOrders = safeStorage.getJSON("cashOrders") || [];
+let pinTimerInterval = null;
 
 // Initialize default data if not exists
 function initializeDefaultData() {
-    // Initialize users array if not exists
-    let users = safeStorage.getJSON('users');
-    if (!users || !Array.isArray(users)) {
-        users = [];
-        safeStorage.setJSON('users', users);
-    }
-    
-    // Initialize menu items if not exists
-    if (!menuItems || !Array.isArray(menuItems)) {
-        menuItems = [];
-        safeStorage.setJSON('menuItems', menuItems);
-    }
-    
-    // Initialize orders if not exists
-    if (!orders || !Array.isArray(orders)) {
-        orders = [];
-        safeStorage.setJSON('orders', orders);
-    }
-    
-    // Initialize contact messages if not exists
-    if (!contactMessages || !Array.isArray(contactMessages)) {
-        contactMessages = [];
-        safeStorage.setJSON('contactMessages', contactMessages);
-    }
-    
-    // Initialize cash orders if not exists
-    if (!cashOrders || !Array.isArray(cashOrders)) {
-        cashOrders = [];
-        safeStorage.setJSON('cashOrders', cashOrders);
-    }
+  // Initialize users array if not exists
+  let users = safeStorage.getJSON("users");
+  if (!users || !Array.isArray(users)) {
+    users = [];
+    safeStorage.setJSON("users", users);
+  }
+
+  // Initialize menu items if not exists
+  if (!menuItems || !Array.isArray(menuItems)) {
+    menuItems = [];
+    safeStorage.setJSON("menuItems", menuItems);
+  }
+
+  // Initialize orders if not exists
+  if (!orders || !Array.isArray(orders)) {
+    orders = [];
+    safeStorage.setJSON("orders", orders);
+  }
+
+  // Initialize contact messages if not exists
+  if (!contactMessages || !Array.isArray(contactMessages)) {
+    contactMessages = [];
+    safeStorage.setJSON("contactMessages", contactMessages);
+  }
+
+  // Initialize cash orders if not exists
+  if (!cashOrders || !Array.isArray(cashOrders)) {
+    cashOrders = [];
+    safeStorage.setJSON("cashOrders", cashOrders);
+  }
+
+  // Initialize sent pins for demo
+  if (!safeStorage.getJSON("sentResetPins")) {
+    safeStorage.setJSON("sentResetPins", {});
+  }
 }
 
 // Show toast message
-function showToast(message, type = 'success') {
-    if (!toast) return;
-    
-    toast.textContent = message;
-    toast.style.background = type === 'success' ? '#28a745' : '#500000';
-    toast.style.display = 'block';
-    
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 2000);
+function showToast(message, type = "success") {
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.style.background = type === "success" ? "#28a745" : "#500000";
+  toast.style.display = "block";
+
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, 2000);
 }
 
 // Format date to DD MMM YYYY (date only, no time)
 function formatDate(dateString) {
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Invalid date';
-        
-        const day = date.getDate();
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = monthNames[date.getMonth()];
-        const year = date.getFullYear();
-        
-        return `${day} ${month} ${year}`;
-    } catch (e) {
-        console.error('Error formatting date:', e);
-        return 'Unknown date';
-    }
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid date";
+
+    const day = date.getDate();
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day} ${month} ${year}`;
+  } catch (e) {
+    console.error("Error formatting date:", e);
+    return "Unknown date";
+  }
 }
 
 // Generate order ID: BCR(YYYYMMDD)-0000
 function generateOrderId() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    
-    return `BCR${year}${month}${day}-${randomNum}`;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+
+  return `BCR${year}${month}${day}-${randomNum}`;
 }
 
 // Generate 6-digit PIN
 function generatePin() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 // Get status class based on status
 function getStatusClass(status) {
-    if (!status) return 'status-pending';
-    
-    switch(status.toLowerCase()) {
-        case 'pending':
-            return 'status-pending';
-        case 'ready':
-            return 'status-ready';
-        case 'completed':
-            return 'status-complete';
-        default:
-            return 'status-pending';
-    }
+  if (!status) return "status-pending";
+
+  switch (status.toLowerCase()) {
+    case "pending":
+      return "status-pending";
+    case "ready":
+      return "status-ready";
+    case "completed":
+      return "status-complete";
+    default:
+      return "status-pending";
+  }
 }
 
 // Check if within operating hours
 function isWithinOperatingHours() {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const currentTime = hours + (minutes / 60);
-    
-    // Monday - Sunday: 10:00 - 21:00 (same as home page)
-    return currentTime >= 10 && currentTime < 21;
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const currentTime = hours + minutes / 60;
+
+  // Monday - Sunday: 10:00 - 21:00 (same as home page)
+  return currentTime >= 10 && currentTime < 21;
 }
 
 // Check user type and redirect
 function checkUserTypeAndRedirect() {
-    if (!currentUser) return false;
-    
-    // Check if user is manager
-    if (currentUser.email === 'manager@BusyCorner.com' && currentUser.password === 'manager123') {
-        safeStorage.removeItem('currentUser');
-        sessionStorage.setItem('isManager', 'true');
-        window.location.href = 'manager.html';
-        return true;
-    }
-    
-    // Check if user is admin
-    if (currentUser.email === 'admin@admin.com' && currentUser.password === 'admin123') {
-        safeStorage.removeItem('currentUser');
-        sessionStorage.setItem('isAdmin', 'true');
-        window.location.href = 'admin.html';
-        return true;
-    }
-    
-    return false;
+  if (!currentUser) return false;
+
+  // Check if user is manager (case-insensitive email)
+  if (
+    emailHelper.compare(currentUser.email, "manager@BusyCorner.com") &&
+    currentUser.password === "manager123"
+  ) {
+    safeStorage.removeItem("currentUser");
+    sessionStorage.setItem("isManager", "true");
+    window.location.href = "manager.html";
+    return true;
+  }
+
+  // Check if user is admin (case-insensitive email)
+  if (
+    emailHelper.compare(currentUser.email, "admin@admin.com") &&
+    currentUser.password === "admin123"
+  ) {
+    safeStorage.removeItem("currentUser");
+    sessionStorage.setItem("isAdmin", "true");
+    window.location.href = "admin.html";
+    return true;
+  }
+
+  return false;
 }
 
 // Load all orders from storage (card + cash)
 function loadAllOrders() {
-    try {
-        // Load online orders
-        const onlineOrders = safeStorage.getJSON('orders') || [];
-        
-        // Load cash orders
-        cashOrders = safeStorage.getJSON('cashOrders') || [];
-        
-        // Combine all orders
-        const allOrders = [...onlineOrders, ...cashOrders];
-        
-        // Format orders consistently
-        const formattedOrders = allOrders.map(order => ({
-            id: order.id || Date.now(),
-            orderId: order.orderId || (order.type === 'cash' ? `CASH${Date.now().toString().slice(-8)}` : `BCR${Date.now().toString().slice(-8)}`),
-            timestamp: order.timestamp || new Date().toISOString(),
-            items: order.items || [],
-            total: order.total || 0,
-            userEmail: order.userEmail || (order.type === 'cash' ? 'cash@payment.com' : 'unknown@email.com'),
-            pin: order.type === 'cash' ? null : (order.pin || generatePin()),
-            status: (order.status || 'pending').toLowerCase(),
-            type: order.type || 'card'
-        }));
-        
-        // Initialize order manager with all orders
-        orderManager.init(formattedOrders);
-        
-        // Update local orders variable
-        orders = onlineOrders;
-        cashOrders = cashOrders;
-        
-    } catch (error) {
-        console.error('Error loading orders in customer app:', error);
-        orderManager.init([]);
-    }
+  try {
+    // Load online orders
+    const onlineOrders = safeStorage.getJSON("orders") || [];
+
+    // Load cash orders
+    cashOrders = safeStorage.getJSON("cashOrders") || [];
+
+    // Combine all orders
+    const allOrders = [...onlineOrders, ...cashOrders];
+
+    // Format orders consistently
+    const formattedOrders = allOrders.map((order) => ({
+      id: order.id || Date.now(),
+      orderId:
+        order.orderId ||
+        (order.type === "cash"
+          ? `CASH${Date.now().toString().slice(-8)}`
+          : `BCR${Date.now().toString().slice(-8)}`),
+      timestamp: order.timestamp || new Date().toISOString(),
+      items: order.items || [],
+      total: order.total || 0,
+      userEmail:
+        order.userEmail ||
+        (order.type === "cash" ? "cash@payment.com" : "unknown@email.com"),
+      pin: order.type === "cash" ? null : order.pin || generatePin(),
+      status: (order.status || "pending").toLowerCase(),
+      type: order.type || "card",
+    }));
+
+    // Initialize order manager with all orders
+    orderManager.init(formattedOrders);
+
+    // Update local orders variable
+    orders = onlineOrders;
+    cashOrders = cashOrders;
+  } catch (error) {
+    console.error("Error loading orders in customer app:", error);
+    orderManager.init([]);
+  }
 }
 
 // Display orders in the orders section - Only shows card orders for the logged-in user, shows date only
 function displayOrders() {
-    if (!ordersContainer) return;
-    
-    if (!currentUser) {
-        ordersContainer.innerHTML = `
+  if (!ordersContainer) return;
+
+  if (!currentUser) {
+    ordersContainer.innerHTML = `
             <div class="empty-orders">
                 <p>Please login to view your orders.</p>
                 <a href="#login" class="hero-btn">Login</a>
             </div>
         `;
-        return;
-    }
-    
-    // Get user's orders (only non-cash orders that belong to this user)
-    const userOrders = orderManager.getUserOrders(currentUser.email);
-    
-    if (userOrders.length === 0) {
-        ordersContainer.innerHTML = `
+    return;
+  }
+
+  // Get user's orders (only non-cash orders that belong to this user)
+  const userOrders = orderManager.getUserOrders(currentUser.email);
+
+  if (userOrders.length === 0) {
+    ordersContainer.innerHTML = `
             <div class="empty-orders">
                 <p>You haven't placed any orders yet.</p>
                 <a href="#menu" class="hero-btn">Browse Menu</a>
             </div>
         `;
-        return;
-    }
-    
-    ordersContainer.innerHTML = '';
-    
-    const fragment = document.createDocumentFragment();
-    const displayOrders = userOrders.slice(0, 50);
-    
-    // Sort by timestamp (newest first)
-    displayOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    displayOrders.forEach(order => {
-        const statusClass = getStatusClass(order.status);
-        const orderElement = document.createElement('div');
-        orderElement.className = 'order-item';
-        orderElement.dataset.orderId = order.id;
-        orderElement.innerHTML = `
+    return;
+  }
+
+  ordersContainer.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+  const displayOrders = userOrders.slice(0, 50);
+
+  // Sort by timestamp (newest first)
+  displayOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  displayOrders.forEach((order) => {
+    const statusClass = getStatusClass(order.status);
+    const orderElement = document.createElement("div");
+    orderElement.className = "order-item";
+    orderElement.dataset.orderId = order.id;
+    orderElement.innerHTML = `
             <div class="order-item-header">
-                <h4>${order.orderId || 'Unknown ID'}</h4>
+                <h4>${order.orderId || "Unknown ID"}</h4>
                 <span class="order-date">${formatDate(order.timestamp)}</span>
             </div>
             <div class="order-item-body">
-                <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status || 'pending'}</span></p>
-                <p><strong>Total:</strong> R ${(order.total || 0).toFixed(2)}</p>
-                ${order.type === 'cash' ? '<p><strong>Payment:</strong> Cash</p>' : ''}
+                <p><strong>Status:</strong> <span class="order-status ${statusClass}">${
+      order.status || "pending"
+    }</span></p>
+                <p><strong>Total:</strong> R ${(order.total || 0).toFixed(
+                  2
+                )}</p>
+                ${
+                  order.type === "cash"
+                    ? "<p><strong>Payment:</strong> Cash</p>"
+                    : ""
+                }
             </div>
-            <button class="view-order-btn" data-order-id="${order.id}">View Details</button>
+            <button class="view-order-btn" data-order-id="${
+              order.id
+            }">View Details</button>
         `;
-        fragment.appendChild(orderElement);
+    fragment.appendChild(orderElement);
+  });
+
+  ordersContainer.appendChild(fragment);
+
+  // Add event listeners to view order buttons
+  document.querySelectorAll(".view-order-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const orderId = parseInt(btn.dataset.orderId);
+      const order = orderManager.getOrder(orderId);
+      if (order) {
+        showOrderDetails(order);
+      }
     });
-    
-    ordersContainer.appendChild(fragment);
-    
-    // Add event listeners to view order buttons
-    document.querySelectorAll('.view-order-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const orderId = parseInt(btn.dataset.orderId);
-            const order = orderManager.getOrder(orderId);
-            if (order) {
-                showOrderDetails(order);
-            }
-        });
-    });
-    
-    if (userOrders.length > 50) {
-        const message = document.createElement('div');
-        message.className = 'empty-orders';
-        message.innerHTML = `<p>Showing 50 most recent orders.</p>`;
-        ordersContainer.appendChild(message);
-    }
+  });
+
+  if (userOrders.length > 50) {
+    const message = document.createElement("div");
+    message.className = "empty-orders";
+    message.innerHTML = `<p>Showing 50 most recent orders.</p>`;
+    ordersContainer.appendChild(message);
+  }
 }
 
 // Show order details in modal - Shows date only
 function showOrderDetails(order) {
-    if (!orderModalBody || !orderModal) return;
-    
-    const statusClass = getStatusClass(order.status);
-    const showPin = order.type !== 'cash';
-    
-    orderModalBody.innerHTML = `
+  if (!orderModalBody || !orderModal) return;
+
+  const statusClass = getStatusClass(order.status);
+  const showPin = order.type !== "cash";
+
+  orderModalBody.innerHTML = `
         <div class="order-details">
             <div class="order-detail-row">
                 <strong>Order ID:</strong>
-                <span>${order.orderId || 'Unknown ID'}</span>
+                <span>${order.orderId || "Unknown ID"}</span>
             </div>
             <div class="order-detail-row">
                 <strong>Date:</strong>
@@ -607,26 +844,44 @@ function showOrderDetails(order) {
             </div>
             <div class="order-detail-row">
                 <strong>Status:</strong>
-                <span class="order-status ${statusClass}">${order.status || 'pending'}</span>
+                <span class="order-status ${statusClass}">${
+    order.status || "pending"
+  }</span>
             </div>
             <div class="order-detail-row">
                 <strong>Payment Type:</strong>
-                <span>${order.type === 'cash' ? 'Cash' : 'Card'}</span>
+                <span>${order.type === "cash" ? "Cash" : "Card"}</span>
             </div>
-            ${showPin ? `
+            ${
+              showPin
+                ? `
                 <div class="order-pin">
                     <div class="pin-label">Collection PIN:</div>
-                    <div class="pin-code">${order.pin || '000000'}</div>
+                    <div class="pin-code">${order.pin || "000000"}</div>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
             <div class="order-items">
                 <h4>Items:</h4>
-                ${order.items && Array.isArray(order.items) ? order.items.map(item => `
+                ${
+                  order.items && Array.isArray(order.items)
+                    ? order.items
+                        .map(
+                          (item) => `
                     <div class="order-item-detail">
-                        <span>${item.quantity || 1}x ${item.name || 'Unknown item'}</span>
-                        <span>R ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</span>
+                        <span>${item.quantity || 1}x ${
+                            item.name || "Unknown item"
+                          }</span>
+                        <span>R ${(
+                          (item.price || 0) * (item.quantity || 1)
+                        ).toFixed(2)}</span>
                     </div>
-                `).join('') : '<p>No items in this order</p>'}
+                `
+                        )
+                        .join("")
+                    : "<p>No items in this order</p>"
+                }
             </div>
             <div class="order-total">
                 <strong>Total Amount:</strong>
@@ -634,1181 +889,1530 @@ function showOrderDetails(order) {
             </div>
         </div>
     `;
-    
-    orderModal.classList.add('active');
+
+  orderModal.classList.add("active");
 }
 
 // Close order modal
 function closeOrderModalFunc() {
-    if (orderModal) {
-        orderModal.classList.remove('active');
-    }
+  if (orderModal) {
+    orderModal.classList.remove("active");
+  }
 }
 
 // Update contact form with user details
 function updateContactForm() {
-    if (!contactNameInput || !contactEmailInput) return;
-    
-    if (currentUser) {
-        contactNameInput.value = currentUser.name || '';
-        contactEmailInput.value = currentUser.email || '';
-        contactNameInput.readOnly = true;
-        contactEmailInput.readOnly = true;
-        contactNameInput.style.backgroundColor = '#f5f5f5';
-        contactEmailInput.style.backgroundColor = '#f5f5f5';
-    } else {
-        contactNameInput.value = '';
-        contactEmailInput.value = '';
-        contactNameInput.readOnly = false;
-        contactEmailInput.readOnly = false;
-        contactNameInput.style.backgroundColor = '';
-        contactEmailInput.style.backgroundColor = '';
-    }
+  if (!contactNameInput || !contactEmailInput) return;
+
+  if (currentUser) {
+    contactNameInput.value = currentUser.name || "";
+    contactEmailInput.value = currentUser.email || "";
+    contactNameInput.readOnly = true;
+    contactEmailInput.readOnly = true;
+    contactNameInput.style.backgroundColor = "#f5f5f5";
+    contactEmailInput.style.backgroundColor = "#f5f5f5";
+  } else {
+    contactNameInput.value = "";
+    contactEmailInput.value = "";
+    contactNameInput.readOnly = false;
+    contactEmailInput.readOnly = false;
+    contactNameInput.style.backgroundColor = "";
+    contactEmailInput.style.backgroundColor = "";
+  }
 }
 
 // Display menu items
 function displayMenuItems() {
-    const mealsContainer = document.querySelector('.menu-category.meals');
-    const drinksContainer = document.querySelector('.menu-category.drinks');
-    
-    if (!mealsContainer || !drinksContainer) return;
-    
-    mealsContainer.innerHTML = '';
-    drinksContainer.innerHTML = '';
-    
-    const activeMenuItems = Array.isArray(menuItems) ? menuItems.filter(item => item.active === true) : [];
-    const mealsFragment = document.createDocumentFragment();
-    const drinksFragment = document.createDocumentFragment();
-    
-    const meals = activeMenuItems.filter(item => item.category === 'meals');
-    if (meals.length === 0) {
-        mealsContainer.innerHTML = '<div class="empty-state"><p>No meals available</p></div>';
-    } else {
-        meals.forEach(item => {
-            const menuItemElement = document.createElement('div');
-            menuItemElement.className = 'menu-item';
-            menuItemElement.dataset.category = item.category;
-            menuItemElement.dataset.price = item.price;
-            menuItemElement.innerHTML = `
-                <h3>${item.name || 'Unknown Item'}</h3>
-                ${item.description ? `<p>${item.description}</p>` : ''}
+  const mealsContainer = document.querySelector(".menu-category.meals");
+  const drinksContainer = document.querySelector(".menu-category.drinks");
+
+  if (!mealsContainer || !drinksContainer) return;
+
+  mealsContainer.innerHTML = "";
+  drinksContainer.innerHTML = "";
+
+  const activeMenuItems = Array.isArray(menuItems)
+    ? menuItems.filter((item) => item.active === true)
+    : [];
+  const mealsFragment = document.createDocumentFragment();
+  const drinksFragment = document.createDocumentFragment();
+
+  const meals = activeMenuItems.filter((item) => item.category === "meals");
+  if (meals.length === 0) {
+    mealsContainer.innerHTML =
+      '<div class="empty-state"><p>No meals available</p></div>';
+  } else {
+    meals.forEach((item) => {
+      const menuItemElement = document.createElement("div");
+      menuItemElement.className = "menu-item";
+      menuItemElement.dataset.category = item.category;
+      menuItemElement.dataset.price = item.price;
+      menuItemElement.innerHTML = `
+                <h3>${item.name || "Unknown Item"}</h3>
+                ${item.description ? `<p>${item.description}</p>` : ""}
                 <span class="price">R ${(item.price || 0).toFixed(2)}</span>
                 <button class="add-to-cart">Add to Cart</button>
             `;
-            mealsFragment.appendChild(menuItemElement);
-        });
-        mealsContainer.appendChild(mealsFragment);
-    }
-    
-    const drinks = activeMenuItems.filter(item => item.category === 'drinks');
-    if (drinks.length === 0) {
-        drinksContainer.innerHTML = '<div class="empty-state"><p>No drinks available</p></div>';
-    } else {
-        drinks.forEach(item => {
-            const menuItemElement = document.createElement('div');
-            menuItemElement.className = 'menu-item';
-            menuItemElement.dataset.category = item.category;
-            menuItemElement.dataset.price = item.price;
-            menuItemElement.innerHTML = `
-                <h3>${item.name || 'Unknown Item'}</h3>
-                ${item.description ? `<p>${item.description}</p>` : ''}
-                <span class="price">R ${(item.price || 0).toFixed(2)}</span>
-                <button class="add-to-cart">Add to Cart</button>
-            `;
-            drinksFragment.appendChild(menuItemElement);
-        });
-        drinksContainer.appendChild(drinksFragment);
-    }
-    
-    document.querySelectorAll('.add-to-cart').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            if (!isWithinOperatingHours()) {
-                showToast('Orders can only be placed during operating hours', 'error');
-                return;
-            }
-            
-            const menuItem = this.closest('.menu-item');
-            if (!menuItem) return;
-            
-            const itemName = menuItem.querySelector('h3')?.textContent || 'Unknown Item';
-            const price = menuItem.dataset.price || '0';
-            const category = menuItem.dataset.category || 'meals';
-            
-            addToCart(itemName, price, category);
-            
-            const originalText = this.textContent;
-            const originalBg = this.style.background;
-            this.textContent = 'Added';
-            this.style.background = '#28a745';
-            
-            setTimeout(() => {
-                this.textContent = originalText;
-                this.style.background = originalBg;
-            }, 1000);
-        });
+      mealsFragment.appendChild(menuItemElement);
     });
+    mealsContainer.appendChild(mealsFragment);
+  }
+
+  const drinks = activeMenuItems.filter((item) => item.category === "drinks");
+  if (drinks.length === 0) {
+    drinksContainer.innerHTML =
+      '<div class="empty-state"><p>No drinks available</p></div>';
+  } else {
+    drinks.forEach((item) => {
+      const menuItemElement = document.createElement("div");
+      menuItemElement.className = "menu-item";
+      menuItemElement.dataset.category = item.category;
+      menuItemElement.dataset.price = item.price;
+      menuItemElement.innerHTML = `
+                <h3>${item.name || "Unknown Item"}</h3>
+                ${item.description ? `<p>${item.description}</p>` : ""}
+                <span class="price">R ${(item.price || 0).toFixed(2)}</span>
+                <button class="add-to-cart">Add to Cart</button>
+            `;
+      drinksFragment.appendChild(menuItemElement);
+    });
+    drinksContainer.appendChild(drinksFragment);
+  }
+
+  document.querySelectorAll(".add-to-cart").forEach((btn) => {
+    btn.addEventListener("click", function (e) {
+      if (!isWithinOperatingHours()) {
+        showToast("Orders can only be placed during operating hours", "error");
+        return;
+      }
+
+      const menuItem = this.closest(".menu-item");
+      if (!menuItem) return;
+
+      const itemName =
+        menuItem.querySelector("h3")?.textContent || "Unknown Item";
+      const price = menuItem.dataset.price || "0";
+      const category = menuItem.dataset.category || "meals";
+
+      addToCart(itemName, price, category);
+
+      const originalText = this.textContent;
+      const originalBg = this.style.background;
+      this.textContent = "Added";
+      this.style.background = "#28a745";
+
+      setTimeout(() => {
+        this.textContent = originalText;
+        this.style.background = originalBg;
+      }, 1000);
+    });
+  });
 }
 
 // Set active section and update active nav link
 function setActiveSection(sectionId) {
-    if ((sectionId === 'orders' || sectionId === 'profile') && !currentUser) {
-        showToast('Login to access this section', 'error');
-        sectionId = 'login';
+  if ((sectionId === "orders" || sectionId === "profile") && !currentUser) {
+    showToast("Login to access this section", "error");
+    sectionId = "login";
+  }
+
+  sections.forEach((section) => {
+    section.classList.remove("active");
+  });
+
+  const activeSection = document.getElementById(sectionId);
+  if (activeSection) {
+    activeSection.classList.add("active");
+
+    if (sectionId === "menu") {
+      showMenuCategory("meals");
+      displayMenuItems();
     }
-    
-    sections.forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    const activeSection = document.getElementById(sectionId);
-    if (activeSection) {
-        activeSection.classList.add('active');
-        
-        if (sectionId === 'menu') {
-            showMenuCategory('meals');
-            displayMenuItems();
-        }
-        
-        if (sectionId === 'profile' && currentUser) {
-            updateProfileInfo();
-        }
-        
-        if (sectionId === 'orders' && currentUser) {
-            displayOrders();
-        }
-        
-        if (sectionId === 'contact') {
-            updateContactForm();
-        }
-        
-        if (sectionId === 'about') {
-            // No dynamic data needed for about page
-        }
+
+    if (sectionId === "profile" && currentUser) {
+      updateProfileInfo();
     }
-    
-    updateActiveNavLink(sectionId);
-    updateCartVisibility();
+
+    if (sectionId === "orders" && currentUser) {
+      displayOrders();
+    }
+
+    if (sectionId === "contact") {
+      updateContactForm();
+    }
+
+    if (sectionId === "about") {
+      // No dynamic data needed for about page
+    }
+  }
+
+  updateActiveNavLink(sectionId);
+  updateCartVisibility();
 }
 
 // Update active navigation link
 function updateActiveNavLink(sectionId) {
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${sectionId}`) {
-            link.classList.add('active');
-        }
-    });
+  navLinks.forEach((link) => {
+    link.classList.remove("active");
+    if (link.getAttribute("href") === `#${sectionId}`) {
+      link.classList.add("active");
+    }
+  });
 }
 
 // Update navigation based on login state
 function updateNavigation() {
-    const isLoggedIn = currentUser !== null;
-    
-    protectedNavLinks.forEach(link => {
-        if (isLoggedIn) {
-            link.style.display = 'block';
-        } else {
-            link.style.display = 'none';
-            if (link.classList.contains('active')) {
-                link.classList.remove('active');
-            }
-        }
-    });
-    
-    if (loginLogoutLink) {
-        if (isLoggedIn) {
-            loginLogoutLink.textContent = 'Logout';
-            loginLogoutLink.setAttribute('href', '#logout');
-            loginLogoutLink.classList.add('logout-link');
-        } else {
-            loginLogoutLink.textContent = 'Login';
-            loginLogoutLink.setAttribute('href', '#login');
-            loginLogoutLink.classList.remove('logout-link');
-        }
+  const isLoggedIn = currentUser !== null;
+
+  protectedNavLinks.forEach((link) => {
+    if (isLoggedIn) {
+      link.style.display = "block";
+    } else {
+      link.style.display = "none";
+      if (link.classList.contains("active")) {
+        link.classList.remove("active");
+      }
     }
+  });
+
+  if (loginLogoutLink) {
+    if (isLoggedIn) {
+      loginLogoutLink.textContent = "Logout";
+      loginLogoutLink.setAttribute("href", "#logout");
+      loginLogoutLink.classList.add("logout-link");
+    } else {
+      loginLogoutLink.textContent = "Login";
+      loginLogoutLink.setAttribute("href", "#login");
+      loginLogoutLink.classList.remove("logout-link");
+    }
+  }
 }
 
 // Toggle sidebar function
 function toggleSidebar() {
-    if (!hamburgerBtn || !sidebar || !overlay) return;
-    
-    hamburgerBtn.classList.toggle('active');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+  if (!hamburgerBtn || !sidebar || !overlay) return;
+
+  hamburgerBtn.classList.toggle("active");
+  sidebar.classList.toggle("active");
+  overlay.classList.toggle("active");
+  document.body.style.overflow = sidebar.classList.contains("active")
+    ? "hidden"
+    : "";
 }
 
 // Close sidebar function
 function closeSidebar() {
-    if (!hamburgerBtn || !sidebar || !overlay) return;
-    
-    hamburgerBtn.classList.remove('active');
-    sidebar.classList.remove('active');
-    overlay.classList.remove('active');
-    document.body.style.overflow = '';
+  if (!hamburgerBtn || !sidebar || !overlay) return;
+
+  hamburgerBtn.classList.remove("active");
+  sidebar.classList.remove("active");
+  overlay.classList.remove("active");
+  document.body.style.overflow = "";
 }
 
 // Handle navigation link clicks
 function handleNavClick(e) {
-    e.preventDefault();
-    const targetId = this.getAttribute('href').substring(1);
-    
-    if (targetId === 'logout') {
-        showLogoutConfirmModal();
-        closeSidebar();
-        return;
-    }
-    
-    setActiveSection(targetId);
+  e.preventDefault();
+  const targetId = this.getAttribute("href").substring(1);
+
+  if (targetId === "logout") {
+    showLogoutConfirmModal();
     closeSidebar();
-    window.location.hash = targetId;
-    
-    const section = document.getElementById(targetId);
-    if (section) {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    }
+    return;
+  }
+
+  setActiveSection(targetId);
+  closeSidebar();
+  window.location.hash = targetId;
+
+  const section = document.getElementById(targetId);
+  if (section) {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
 }
 
 // Show logout confirmation modal
 function showLogoutConfirmModal() {
-    if (logoutConfirmModal) {
-        logoutConfirmModal.classList.add('active');
-    }
+  if (logoutConfirmModal) {
+    logoutConfirmModal.classList.add("active");
+  }
 }
 
 // Close logout confirmation modal
 function closeLogoutConfirmModal() {
-    if (logoutConfirmModal) {
-        logoutConfirmModal.classList.remove('active');
-    }
+  if (logoutConfirmModal) {
+    logoutConfirmModal.classList.remove("active");
+  }
 }
 
 // Handle logout
 function handleLogout() {
-    currentUser = null;
-    safeStorage.removeItem('currentUser');
-    sessionStorage.removeItem('isManager');
-    sessionStorage.removeItem('isAdmin');
-    cart = [];
-    saveCartToStorage();
-    updateNavigation();
-    showToast('Logged out successfully');
-    setActiveSection('menu');
-    closeSidebar();
-    window.location.hash = 'menu';
-    closeLogoutConfirmModal();
+  currentUser = null;
+  safeStorage.removeItem("currentUser");
+  sessionStorage.removeItem("isManager");
+  sessionStorage.removeItem("isAdmin");
+  cart = [];
+  saveCartToStorage();
+  updateNavigation();
+  showToast("Logged out successfully");
+  setActiveSection("menu");
+  closeSidebar();
+  window.location.hash = "menu";
+  closeLogoutConfirmModal();
 }
 
 // Show login/register form
 function showLoginForm() {
-    if (!formTitle || !formSubtitle || !loginForm || !registerForm) return;
-    
-    formTitle.textContent = 'Login';
-    formSubtitle.textContent = 'Access your account to make online orders, view order history, and more.';
-    loginForm.classList.add('active-form');
-    registerForm.classList.remove('active-form');
+  if (!formTitle || !formSubtitle || !loginForm || !registerForm) return;
+
+  formTitle.textContent = "Login";
+  formSubtitle.textContent =
+    "Access your account to make online orders, view order history, and more.";
+  loginForm.classList.add("active-form");
+  registerForm.classList.remove("active-form");
 }
 
 function showRegisterForm() {
-    if (!formTitle || !formSubtitle || !loginForm || !registerForm) return;
-    
-    formTitle.textContent = 'Register';
-    formSubtitle.textContent = 'Create your account to make online orders and more.';
-    loginForm.classList.remove('active-form');
-    registerForm.classList.add('active-form');
+  if (!formTitle || !formSubtitle || !loginForm || !registerForm) return;
+
+  formTitle.textContent = "Register";
+  formSubtitle.textContent =
+    "Create your account to make online orders and more.";
+  loginForm.classList.remove("active-form");
+  registerForm.classList.add("active-form");
 }
 
 // Update profile information
 function updateProfileInfo() {
-    if (!currentUser || !profileName || !profileEmail || !profilePhone) return;
-    
-    profileName.textContent = currentUser.name || '-';
-    profileEmail.textContent = currentUser.email || '-';
-    profilePhone.textContent = currentUser.phone || '-';
+  if (!currentUser || !profileName || !profileEmail || !profilePhone) return;
+
+  profileName.textContent = currentUser.name || "-";
+  profileEmail.textContent = currentUser.email || "-";
+  profilePhone.textContent = currentUser.phone || "-";
 }
 
 // Show edit profile modal
 function showEditProfileModal() {
-    if (!currentUser || !profileEditModal) return;
-    
-    if (editNameInput) editNameInput.value = currentUser.name || '';
-    if (editEmailInput) editEmailInput.value = currentUser.email || '';
-    if (editPhoneInput) editPhoneInput.value = currentUser.phone || '';
-    
-    if (currentPasswordInput) currentPasswordInput.value = '';
-    if (newPasswordInput) newPasswordInput.value = '';
-    if (confirmPasswordInput) confirmPasswordInput.value = '';
-    
-    profileEditModal.classList.add('active');
+  if (!currentUser || !profileEditModal) return;
+
+  if (editNameInput) editNameInput.value = currentUser.name || "";
+  if (editEmailInput) editEmailInput.value = currentUser.email || "";
+  if (editPhoneInput) editPhoneInput.value = currentUser.phone || "";
+
+  if (currentPasswordInput) currentPasswordInput.value = "";
+  if (newPasswordInput) newPasswordInput.value = "";
+  if (confirmPasswordInput) confirmPasswordInput.value = "";
+
+  profileEditModal.classList.add("active");
 }
 
 // Close edit profile modal
 function closeEditProfileModal() {
-    if (profileEditModal) {
-        profileEditModal.classList.remove('active');
-    }
+  if (profileEditModal) {
+    profileEditModal.classList.remove("active");
+  }
 }
 
 // Save profile changes
 function saveProfileChanges() {
-    if (!currentUser) return;
-    
-    const name = editNameInput?.value.trim() || '';
-    const email = editEmailInput?.value.trim() || '';
-    const phone = editPhoneInput?.value.trim() || '';
-    const currentPassword = currentPasswordInput?.value || '';
-    const newPassword = newPasswordInput?.value || '';
-    const confirmPassword = confirmPasswordInput?.value || '';
-    
-    if (!name || !email || !phone) {
-        showToast('Please fill in all required fields', 'error');
-        return;
+  if (!currentUser) return;
+
+  const name = editNameInput?.value.trim() || "";
+  const email = editEmailInput?.value.trim() || "";
+  const phone = editPhoneInput?.value.trim() || "";
+  const currentPassword = currentPasswordInput?.value || "";
+  const newPassword = newPasswordInput?.value || "";
+  const confirmPassword = confirmPasswordInput?.value || "";
+
+  if (!name || !email || !phone) {
+    showToast("Please fill in all required fields", "error");
+    return;
+  }
+
+  let users = safeStorage.getJSON("users");
+  if (!users || !Array.isArray(users)) {
+    users = [];
+  }
+
+  const userIndex = emailHelper.findUserIndex(users, currentUser.email);
+
+  if (userIndex === -1) {
+    showToast("User not found", "error");
+    return;
+  }
+
+  // Check if new email is already taken (case-insensitive)
+  if (!emailHelper.compare(email, currentUser.email)) {
+    const emailExists = users.some((u) => emailHelper.compare(u.email, email));
+    if (emailExists) {
+      showToast("Email already registered", "error");
+      return;
     }
-    
-    let users = safeStorage.getJSON('users');
-    if (!users || !Array.isArray(users)) {
-        users = [];
+  }
+
+  if (currentPassword || newPassword || confirmPassword) {
+    if (currentPassword !== users[userIndex].password) {
+      showToast("Current password is incorrect", "error");
+      return;
     }
-    
-    const userIndex = users.findIndex(u => u.email === currentUser.email);
-    
-    if (userIndex === -1) {
-        showToast('User not found', 'error');
-        return;
+
+    if (newPassword.length < 6) {
+      showToast("New password must be at least 6 characters", "error");
+      return;
     }
-    
-    if (email !== currentUser.email) {
-        const emailExists = users.some(u => u.email === email && u.email !== currentUser.email);
-        if (emailExists) {
-            showToast('Email already registered', 'error');
-            return;
-        }
+
+    if (newPassword !== confirmPassword) {
+      showToast("New passwords do not match", "error");
+      return;
     }
-    
-    if (currentPassword || newPassword || confirmPassword) {
-        if (currentPassword !== users[userIndex].password) {
-            showToast('Current password is incorrect', 'error');
-            return;
-        }
-        
-        if (newPassword.length < 6) {
-            showToast('New password must be at least 6 characters', 'error');
-            return;
-        }
-        
-        if (newPassword !== confirmPassword) {
-            showToast('New passwords do not match', 'error');
-            return;
-        }
-        
-        users[userIndex].password = newPassword;
-    }
-    
-    users[userIndex].name = name;
-    users[userIndex].email = email;
-    users[userIndex].phone = phone;
-    
-    safeStorage.setJSON('users', users);
-    currentUser = users[userIndex];
-    safeStorage.setJSON('currentUser', currentUser);
-    updateProfileInfo();
-    
-    if (contactEmailInput && contactEmailInput.value === currentUser.email) {
-        contactNameInput.value = currentUser.name;
-        contactEmailInput.value = currentUser.email;
-    }
-    
-    closeEditProfileModal();
-    showToast('Profile updated successfully');
+
+    users[userIndex].password = newPassword;
+  }
+
+  users[userIndex].name = name;
+  users[userIndex].email = email; // Store as entered (preserve case for display)
+  users[userIndex].phone = phone;
+
+  safeStorage.setJSON("users", users);
+  currentUser = users[userIndex];
+  safeStorage.setJSON("currentUser", currentUser);
+  updateProfileInfo();
+
+  if (contactEmailInput && contactEmailInput.value === currentUser.email) {
+    contactNameInput.value = currentUser.name;
+    contactEmailInput.value = currentUser.email;
+  }
+
+  closeEditProfileModal();
+  showToast("Profile updated successfully");
 }
 
 // Show delete confirmation modal
 function showDeleteConfirmModal() {
-    if (deleteConfirmModal) {
-        deleteConfirmModal.classList.add('active');
-    }
+  if (deleteConfirmModal) {
+    deleteConfirmModal.classList.add("active");
+  }
 }
 
 // Close delete confirmation modal
 function closeDeleteConfirmModal() {
-    if (deleteConfirmModal) {
-        deleteConfirmModal.classList.remove('active');
-    }
+  if (deleteConfirmModal) {
+    deleteConfirmModal.classList.remove("active");
+  }
 }
 
 // Delete user profile
 function deleteUserProfile() {
-    if (!currentUser) return;
-    
-    let users = safeStorage.getJSON('users');
-    if (!users || !Array.isArray(users)) {
-        users = [];
-    }
-    
-    const updatedUsers = users.filter(u => u.email !== currentUser.email);
-    safeStorage.setJSON('users', updatedUsers);
-    currentUser = null;
-    safeStorage.removeItem('currentUser');
-    cart = [];
-    saveCartToStorage();
-    updateNavigation();
-    showToast('Profile deleted successfully');
-    setActiveSection('menu');
-    window.location.hash = 'menu';
-    closeDeleteConfirmModal();
+  if (!currentUser) return;
+
+  let users = safeStorage.getJSON("users");
+  if (!users || !Array.isArray(users)) {
+    users = [];
+  }
+
+  const updatedUsers = users.filter(
+    (u) => !emailHelper.compare(u.email, currentUser.email)
+  );
+  safeStorage.setJSON("users", updatedUsers);
+  currentUser = null;
+  safeStorage.removeItem("currentUser");
+  cart = [];
+  saveCartToStorage();
+  updateNavigation();
+  showToast("Profile deleted successfully");
+  setActiveSection("menu");
+  window.location.hash = "menu";
+  closeDeleteConfirmModal();
 }
 
 // Show menu category based on filter
 function showMenuCategory(filter) {
-    filterBtns.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.filter === filter) {
-            btn.classList.add('active');
-        }
-    });
-    
-    menuCategories.forEach(category => {
-        if (category.classList.contains(filter)) {
-            category.classList.add('active');
-        } else {
-            category.classList.remove('active');
-        }
-    });
+  filterBtns.forEach((btn) => {
+    btn.classList.remove("active");
+    if (btn.dataset.filter === filter) {
+      btn.classList.add("active");
+    }
+  });
+
+  menuCategories.forEach((category) => {
+    if (category.classList.contains(filter)) {
+      category.classList.add("active");
+    } else {
+      category.classList.remove("active");
+    }
+  });
 }
 
 // Search menu items
 function searchMenuItems(searchTerm) {
-    const items = document.querySelectorAll('.menu-item');
-    const categories = document.querySelectorAll('.menu-category');
-    
-    categories.forEach(category => {
-        category.style.display = 'block';
-    });
-    
-    let hasResults = false;
-    
-    items.forEach(item => {
-        const itemName = item.querySelector('h3')?.textContent.toLowerCase() || '';
-        const itemDesc = item.querySelector('p') ? item.querySelector('p').textContent.toLowerCase() : '';
-        
-        if (itemName.includes(searchTerm.toLowerCase()) || itemDesc.includes(searchTerm.toLowerCase())) {
-            item.style.display = 'block';
-            hasResults = true;
-            
-            const category = item.closest('.menu-category');
-            if (category) {
-                category.style.display = 'block';
-            }
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    
-    if (!hasResults) {
-        const noResults = document.createElement('div');
-        noResults.className = 'no-results';
-        noResults.textContent = 'No menu items found';
-        noResults.style.textAlign = 'center';
-        noResults.style.padding = '20px';
-        noResults.style.color = '#666';
-        
-        document.querySelectorAll('.no-results').forEach(el => el.remove());
-        
-        const visibleCategory = document.querySelector('.menu-category.active');
-        if (visibleCategory) {
-            visibleCategory.appendChild(noResults);
-        }
+  const items = document.querySelectorAll(".menu-item");
+  const categories = document.querySelectorAll(".menu-category");
+
+  categories.forEach((category) => {
+    category.style.display = "block";
+  });
+
+  let hasResults = false;
+
+  items.forEach((item) => {
+    const itemName = item.querySelector("h3")?.textContent.toLowerCase() || "";
+    const itemDesc = item.querySelector("p")
+      ? item.querySelector("p").textContent.toLowerCase()
+      : "";
+
+    if (
+      itemName.includes(searchTerm.toLowerCase()) ||
+      itemDesc.includes(searchTerm.toLowerCase())
+    ) {
+      item.style.display = "block";
+      hasResults = true;
+
+      const category = item.closest(".menu-category");
+      if (category) {
+        category.style.display = "block";
+      }
     } else {
-        document.querySelectorAll('.no-results').forEach(el => el.remove());
+      item.style.display = "none";
     }
+  });
+
+  if (!hasResults) {
+    const noResults = document.createElement("div");
+    noResults.className = "no-results";
+    noResults.textContent = "No menu items found";
+    noResults.style.textAlign = "center";
+    noResults.style.padding = "20px";
+    noResults.style.color = "#666";
+
+    document.querySelectorAll(".no-results").forEach((el) => el.remove());
+
+    const visibleCategory = document.querySelector(".menu-category.active");
+    if (visibleCategory) {
+      visibleCategory.appendChild(noResults);
+    }
+  } else {
+    document.querySelectorAll(".no-results").forEach((el) => el.remove());
+  }
 }
 
 // Cart functions
 function addToCart(itemName, price, category) {
-    if (!currentUser) {
-        showToast('Login to add items to cart', 'error');
-        setActiveSection('login');
-        return;
-    }
-    
-    if (!isWithinOperatingHours()) {
-        showToast('Orders can only be placed during operating hours', 'error');
-        return;
-    }
-    
-    const existingItem = cart.find(item => item.name === itemName);
-    
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({
-            name: itemName,
-            price: parseFloat(price) || 0,
-            quantity: 1,
-            category: category
-        });
-    }
-    
-    updateCart();
-    updateCartVisibility();
-    saveCartToStorage();
+  if (!currentUser) {
+    showToast("Login to add items to cart", "error");
+    setActiveSection("login");
+    return;
+  }
+
+  if (!isWithinOperatingHours()) {
+    showToast("Orders can only be placed during operating hours", "error");
+    return;
+  }
+
+  const existingItem = cart.find((item) => item.name === itemName);
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    cart.push({
+      name: itemName,
+      price: parseFloat(price) || 0,
+      quantity: 1,
+      category: category,
+    });
+  }
+
+  updateCart();
+  updateCartVisibility();
+  saveCartToStorage();
 }
 
 function removeFromCart(itemName) {
-    const itemIndex = cart.findIndex(item => item.name === itemName);
-    
-    if (itemIndex > -1) {
-        cart.splice(itemIndex, 1);
-        updateCart();
-        updateCartVisibility();
-        saveCartToStorage();
-    }
+  const itemIndex = cart.findIndex((item) => item.name === itemName);
+
+  if (itemIndex > -1) {
+    cart.splice(itemIndex, 1);
+    updateCart();
+    updateCartVisibility();
+    saveCartToStorage();
+  }
 }
 
 function updateItemQuantity(itemName, change) {
-    const item = cart.find(item => item.name === itemName);
-    
-    if (item) {
-        item.quantity += change;
-        
-        if (item.quantity <= 0) {
-            removeFromCart(itemName);
-        } else {
-            updateCart();
-            saveCartToStorage();
-        }
+  const item = cart.find((item) => item.name === itemName);
+
+  if (item) {
+    item.quantity += change;
+
+    if (item.quantity <= 0) {
+      removeFromCart(itemName);
+    } else {
+      updateCart();
+      saveCartToStorage();
     }
+  }
 }
 
 function updateCart() {
-    if (!cartCount || !cartItems || !totalAmount) return;
-    
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    cartCount.textContent = totalItems;
-    cartItems.innerHTML = '';
-    
-    if (cart.length === 0) {
-        cartItems.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
-    } else {
-        const fragment = document.createDocumentFragment();
-        
-        cart.forEach(item => {
-            const itemElement = document.createElement('div');
-            itemElement.className = 'cart-item';
-            itemElement.innerHTML = `
+  if (!cartCount || !cartItems || !totalAmount) return;
+
+  const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  cartCount.textContent = totalItems;
+  cartItems.innerHTML = "";
+
+  if (cart.length === 0) {
+    cartItems.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
+  } else {
+    const fragment = document.createDocumentFragment();
+
+    cart.forEach((item) => {
+      const itemElement = document.createElement("div");
+      itemElement.className = "cart-item";
+      itemElement.innerHTML = `
                 <div class="cart-item-info">
-                    <h4>${item.name || 'Unknown Item'}</h4>
+                    <h4>${item.name || "Unknown Item"}</h4>
                     <p>R ${(item.price || 0).toFixed(2)}</p>
                 </div>
                 <div class="cart-item-actions">
-                    <button class="quantity-btn decrease" data-item="${item.name}">-</button>
+                    <button class="quantity-btn decrease" data-item="${
+                      item.name
+                    }">-</button>
                     <span>${item.quantity || 1}</span>
-                    <button class="quantity-btn increase" data-item="${item.name}">+</button>
-                    <button class="remove-item" data-item="${item.name}">&times;</button>
+                    <button class="quantity-btn increase" data-item="${
+                      item.name
+                    }">+</button>
+                    <button class="remove-item" data-item="${
+                      item.name
+                    }">&times;</button>
                 </div>
             `;
-            fragment.appendChild(itemElement);
-        });
-        
-        cartItems.appendChild(fragment);
-        
-        document.querySelectorAll('.decrease').forEach(btn => {
-            btn.addEventListener('click', () => {
-                updateItemQuantity(btn.dataset.item, -1);
-            });
-        });
-        
-        document.querySelectorAll('.increase').forEach(btn => {
-            btn.addEventListener('click', () => {
-                updateItemQuantity(btn.dataset.item, 1);
-            });
-        });
-        
-        document.querySelectorAll('.remove-item').forEach(btn => {
-            btn.addEventListener('click', () => {
-                removeFromCart(btn.dataset.item);
-            });
-        });
-    }
-    
-    const total = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    totalAmount.textContent = `R ${total.toFixed(2)}`;
+      fragment.appendChild(itemElement);
+    });
+
+    cartItems.appendChild(fragment);
+
+    document.querySelectorAll(".decrease").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        updateItemQuantity(btn.dataset.item, -1);
+      });
+    });
+
+    document.querySelectorAll(".increase").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        updateItemQuantity(btn.dataset.item, 1);
+      });
+    });
+
+    document.querySelectorAll(".remove-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        removeFromCart(btn.dataset.item);
+      });
+    });
+  }
+
+  const total = cart.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+    0
+  );
+  totalAmount.textContent = `R ${total.toFixed(2)}`;
 }
 
 function updateCartVisibility() {
-    if (!cartContainer || !cartModal) return;
-    
-    if (cart.length > 0 && currentUser) {
-        cartContainer.classList.add('visible');
-    } else {
-        cartContainer.classList.remove('visible');
-        cartModal.classList.remove('active');
-    }
+  if (!cartContainer || !cartModal) return;
+
+  if (cart.length > 0 && currentUser) {
+    cartContainer.classList.add("visible");
+  } else {
+    cartContainer.classList.remove("visible");
+    cartModal.classList.remove("active");
+  }
 }
 
 function toggleCartModal() {
-    if (!currentUser) {
-        showToast('Login to view cart', 'error');
-        setActiveSection('login');
-        return;
-    }
-    
-    if (cartModal) {
-        cartModal.classList.toggle('active');
-    }
+  if (!currentUser) {
+    showToast("Login to view cart", "error");
+    setActiveSection("login");
+    return;
+  }
+
+  if (cartModal) {
+    cartModal.classList.toggle("active");
+  }
 }
 
 function saveCartToStorage() {
-    safeStorage.setJSON('cart', cart);
+  safeStorage.setJSON("cart", cart);
 }
 
 // Paystack integration with proper CSP handling
 function processPayment() {
-    const total = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    
-    if (total <= 0) {
-        showToast('Cart total must be greater than zero', 'error');
-        return;
-    }
-    
-    const amountInKobo = Math.round(total * 100);
-    const reference = generateOrderId().replace('BCR', 'PS');
-    
-    if (typeof PaystackPop === 'undefined') {
-        loadPaystackScript().then(() => {
-            initializePayment(amountInKobo, reference);
-        }).catch(error => {
-            console.error('Failed to load Paystack:', error);
-            showToast('Payment system temporarily unavailable.', 'error');
-        });
-    } else {
+  const total = cart.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+    0
+  );
+
+  if (total <= 0) {
+    showToast("Cart total must be greater than zero", "error");
+    return;
+  }
+
+  const amountInKobo = Math.round(total * 100);
+  const reference = generateOrderId().replace("BCR", "PS");
+
+  if (typeof PaystackPop === "undefined") {
+    loadPaystackScript()
+      .then(() => {
         initializePayment(amountInKobo, reference);
-    }
+      })
+      .catch((error) => {
+        console.error("Failed to load Paystack:", error);
+        showToast("Payment system temporarily unavailable.", "error");
+      });
+  } else {
+    initializePayment(amountInKobo, reference);
+  }
 }
 
 // Load Paystack script
 function loadPaystackScript() {
-    return new Promise((resolve, reject) => {
-        if (window.PaystackPop) {
-            resolve();
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = 'https://js.paystack.co/v1/inline.js';
-        script.async = true;
-        script.defer = true;
-        
-        script.onload = () => {
-            resolve();
-        };
-        
-        script.onerror = () => {
-            console.error('Failed to load Paystack script');
-            reject(new Error('Failed to load Paystack'));
-        };
-        
-        document.head.appendChild(script);
-    });
+  return new Promise((resolve, reject) => {
+    if (window.PaystackPop) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      resolve();
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load Paystack script");
+      reject(new Error("Failed to load Paystack"));
+    };
+
+    document.head.appendChild(script);
+  });
 }
 
 // Initialize payment after script is loaded
 function initializePayment(amountInKobo, reference) {
-    const handler = PaystackPop.setup({
-        key: 'pk_test_328d06e1e7acac75cab1175db7c135a8f1697132',
-        email: currentUser.email || '',
-        amount: amountInKobo,
-        currency: 'ZAR',
-        ref: reference,
-        callback: function(response) {
-            saveOrder();
-            
-            const latestOrder = orders.find(order => order.userEmail === currentUser.email && order.timestamp > Date.now() - 1000);
-            if (latestOrder) {
-                showToast(`Payment successful! Order placed. Your PIN: ${latestOrder.pin || '000000'}. Order status: ${latestOrder.status || 'pending'}`);
-            } else {
-                showToast('Payment successful! Order placed.');
-            }
-            
-            cart = [];
-            updateCart();
-            updateCartVisibility();
-            saveCartToStorage();
-            if (cartModal) cartModal.classList.remove('active');
-            setActiveSection('orders');
-        },
-        onClose: function() {
-            showToast('Payment cancelled', 'error');
-        }
-    });
-    
-    handler.openIframe();
+  const handler = PaystackPop.setup({
+    key: "pk_test_328d06e1e7acac75cab1175db7c135a8f1697132",
+    email: currentUser.email || "",
+    amount: amountInKobo,
+    currency: "ZAR",
+    ref: reference,
+    callback: function (response) {
+      saveOrder();
+
+      const latestOrder = orders.find(
+        (order) =>
+          emailHelper.compare(order.userEmail, currentUser.email) &&
+          order.timestamp > Date.now() - 1000
+      );
+      if (latestOrder) {
+        showToast(
+          `Payment successful! Order placed. Your PIN: ${
+            latestOrder.pin || "000000"
+          }. Order status: ${latestOrder.status || "pending"}`
+        );
+      } else {
+        showToast("Payment successful! Order placed.");
+      }
+
+      cart = [];
+      updateCart();
+      updateCartVisibility();
+      saveCartToStorage();
+      if (cartModal) cartModal.classList.remove("active");
+      setActiveSection("orders");
+    },
+    onClose: function () {
+      showToast("Payment cancelled", "error");
+    },
+  });
+
+  handler.openIframe();
 }
 
 // Save order
 function saveOrder() {
-    if (cart.length === 0) return;
-    
-    const order = {
-        id: Date.now(),
-        orderId: generateOrderId(),
-        timestamp: new Date().toISOString(),
-        items: [...cart],
-        total: cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0),
-        userEmail: currentUser.email || '',
-        pin: generatePin(),
-        status: 'pending',
-        type: 'card'
-    };
-    
-    // Add to order manager
-    orderManager.addOrder(order);
-    
+  if (cart.length === 0) return;
+
+  const order = {
+    id: Date.now(),
+    orderId: generateOrderId(),
+    timestamp: new Date().toISOString(),
+    items: [...cart],
+    total: cart.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+      0
+    ),
+    userEmail: currentUser.email || "",
+    pin: generatePin(),
+    status: "pending",
+    type: "card",
+  };
+
+  // Add to order manager (will handle rate limiting)
+  orderManager.queueOrder(order).then(() => {
     // Update main orders array
     orders.unshift(order);
-    
+
     // Save to localStorage immediately
-    safeStorage.setJSON('orders', orders);
-    
+    safeStorage.setJSON("orders", orders);
+
     // Display updated orders
-    if (document.getElementById('orders')?.classList.contains('active') && currentUser) {
-        displayOrders();
+    if (
+      document.getElementById("orders")?.classList.contains("active") &&
+      currentUser
+    ) {
+      displayOrders();
     }
-    
+
     // Trigger real-time update for manager and admin
-    const event = new Event('ordersUpdated');
+    const event = new Event("ordersUpdated");
     window.dispatchEvent(event);
+  });
 }
 
 // Save contact message
 function saveContactMessage(name, email, message) {
-    const contactMessage = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        name: name,
-        email: email,
-        message: message,
-        read: false
-    };
-    
-    if (!Array.isArray(contactMessages)) {
-        contactMessages = [];
+  const contactMessage = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    name: name,
+    email: email,
+    message: message,
+    read: false,
+  };
+
+  if (!Array.isArray(contactMessages)) {
+    contactMessages = [];
+  }
+
+  contactMessages.unshift(contactMessage);
+  safeStorage.setJSON("contactMessages", contactMessages);
+
+  const event = new Event("messagesUpdated");
+  window.dispatchEvent(event);
+}
+
+// Forgot Password Functions
+function showForgotPasswordModal() {
+  if (!forgotPasswordModal) return;
+
+  // Reset to step 1
+  if (forgotStep1) forgotStep1.style.display = "block";
+  if (forgotStep2) forgotStep2.style.display = "none";
+  if (forgotStep3) forgotStep3.style.display = "none";
+  if (forgotEmail) forgotEmail.value = "";
+  if (forgotPin) forgotPin.value = "";
+  if (forgotNewPassword) forgotNewPassword.value = "";
+  if (forgotConfirmPassword) forgotConfirmPassword.value = "";
+
+  // Clear any existing timer
+  if (pinTimerInterval) {
+    clearInterval(pinTimerInterval);
+    pinTimerInterval = null;
+  }
+
+  forgotPasswordModal.classList.add("active");
+}
+
+function closeForgotPasswordModal() {
+  if (forgotPasswordModal) {
+    forgotPasswordModal.classList.remove("active");
+  }
+  if (pinTimerInterval) {
+    clearInterval(pinTimerInterval);
+    pinTimerInterval = null;
+  }
+}
+
+function handleForgotNext() {
+  const email = forgotEmail ? forgotEmail.value.trim() : "";
+
+  if (!email) {
+    showToast("Please enter your email", "error");
+    return;
+  }
+
+  const users = safeStorage.getJSON("users") || [];
+  const user = emailHelper.findUserByEmail(users, email);
+
+  if (!user) {
+    showToast("Email not registered", "error");
+    return;
+  }
+
+  // Generate and send PIN
+  const pin = pinManager.generatePin(email);
+  sendPasswordResetEmail(email, user.name, pin);
+
+  // Update display
+  if (forgotEmailDisplay) {
+    forgotEmailDisplay.textContent = email;
+  }
+
+  // Show step 2
+  if (forgotStep1) forgotStep1.style.display = "none";
+  if (forgotStep2) forgotStep2.style.display = "block";
+
+  // Start timer
+  startPinTimer();
+
+  showToast("PIN sent to your email");
+}
+
+function handleForgotResend() {
+  const email = forgotEmail ? forgotEmail.value.trim() : "";
+
+  if (!email) {
+    showToast("Email not found", "error");
+    return;
+  }
+
+  const users = safeStorage.getJSON("users") || [];
+  const user = emailHelper.findUserByEmail(users, email);
+
+  if (user) {
+    const pin = pinManager.generatePin(email);
+    sendPasswordResetEmail(email, user.name, pin);
+
+    // Restart timer
+    if (pinTimerInterval) {
+      clearInterval(pinTimerInterval);
     }
-    
-    contactMessages.unshift(contactMessage);
-    safeStorage.setJSON('contactMessages', contactMessages);
-    
-    const event = new Event('messagesUpdated');
-    window.dispatchEvent(event);
+    startPinTimer();
+
+    showToast("New PIN sent to your email");
+  } else {
+    showToast("User not found", "error");
+  }
+}
+
+function handleForgotVerify() {
+  const email = forgotEmail ? forgotEmail.value.trim() : "";
+  const enteredPin = forgotPin ? forgotPin.value : "";
+
+  if (!email || !enteredPin) {
+    showToast("Please enter the PIN", "error");
+    return;
+  }
+
+  if (pinManager.verifyPin(email, enteredPin)) {
+    // PIN is correct, move to step 3
+    if (forgotStep2) forgotStep2.style.display = "none";
+    if (forgotStep3) forgotStep3.style.display = "block";
+
+    // Stop timer
+    if (pinTimerInterval) {
+      clearInterval(pinTimerInterval);
+      pinTimerInterval = null;
+    }
+  } else {
+    showToast("Invalid or expired PIN", "error");
+  }
+}
+
+function handleForgotConfirm() {
+  const email = forgotEmail ? forgotEmail.value.trim() : "";
+  const newPassword = forgotNewPassword ? forgotNewPassword.value : "";
+  const confirmPassword = forgotConfirmPassword
+    ? forgotConfirmPassword.value
+    : "";
+
+  if (!newPassword || !confirmPassword) {
+    showToast("Please enter your new password", "error");
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    showToast("Password must be at least 6 characters", "error");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showToast("Passwords do not match", "error");
+    return;
+  }
+
+  const users = safeStorage.getJSON("users") || [];
+  const userIndex = emailHelper.findUserIndex(users, email);
+
+  if (userIndex !== -1) {
+    // Update password
+    users[userIndex].password = newPassword;
+    safeStorage.setJSON("users", users);
+
+    // Clear the PIN
+    pinManager.clearPin(email);
+
+    // Close modal
+    closeForgotPasswordModal();
+
+    // Show login form
+    showLoginForm();
+
+    showToast("Password changed successfully");
+  } else {
+    showToast("User not found", "error");
+  }
+}
+
+function startPinTimer() {
+  const timerElement = pinTimer;
+  if (!timerElement) return;
+
+  let timeLeft = 600; // 10 minutes in seconds
+
+  const updateTimer = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `PIN expires in ${minutes}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+
+    if (timeLeft <= 0) {
+      clearInterval(pinTimerInterval);
+      pinTimerInterval = null;
+      timerElement.textContent = "PIN expired";
+    }
+
+    timeLeft--;
+  };
+
+  updateTimer();
+  pinTimerInterval = setInterval(updateTimer, 1000);
 }
 
 // Event listeners
-if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleSidebar);
-if (overlay) overlay.addEventListener('click', closeSidebar);
+if (hamburgerBtn) hamburgerBtn.addEventListener("click", toggleSidebar);
+if (overlay) overlay.addEventListener("click", closeSidebar);
 
-navLinks.forEach(link => {
-    link.addEventListener('click', handleNavClick);
+navLinks.forEach((link) => {
+  link.addEventListener("click", handleNavClick);
 });
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
-        closeSidebar();
-    }
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && sidebar && sidebar.classList.contains("active")) {
+    closeSidebar();
+  }
 });
 
 // Handle initial page load
 function handleInitialLoad() {
-    initializeDefaultData();
-    
-    if (sessionStorage.getItem('isManager') === 'true') {
-        sessionStorage.removeItem('isManager');
-        window.location.href = 'manager.html';
-        return;
-    }
-    
-    if (sessionStorage.getItem('isAdmin') === 'true') {
-        sessionStorage.removeItem('isAdmin');
-        window.location.href = 'admin.html';
-        return;
-    }
-    
-    // Load data from storage
-    menuItems = safeStorage.getJSON('menuItems') || [];
-    orders = safeStorage.getJSON('orders') || [];
-    contactMessages = safeStorage.getJSON('contactMessages') || [];
-    cashOrders = safeStorage.getJSON('cashOrders') || [];
-    
-    // Load all orders (card + cash)
-    loadAllOrders();
-    
-    updateNavigation();
-    updateCart();
-    updateContactForm();
-    
-    const hash = window.location.hash.substring(1);
-    const validSections = ['menu', 'orders', 'contact', 'profile', 'login', 'about', 'help'];
-    
-    if (hash === 'logout') {
-        showLogoutConfirmModal();
-        return;
-    }
-    
-    if (hash && validSections.includes(hash)) {
-        setActiveSection(hash);
-    } else {
-        setActiveSection('menu');
-        window.location.hash = 'menu';
-    }
+  initializeDefaultData();
+
+  if (sessionStorage.getItem("isManager") === "true") {
+    sessionStorage.removeItem("isManager");
+    window.location.href = "manager.html";
+    return;
+  }
+
+  if (sessionStorage.getItem("isAdmin") === "true") {
+    sessionStorage.removeItem("isAdmin");
+    window.location.href = "admin.html";
+    return;
+  }
+
+  // Load data from storage
+  menuItems = safeStorage.getJSON("menuItems") || [];
+  orders = safeStorage.getJSON("orders") || [];
+  contactMessages = safeStorage.getJSON("contactMessages") || [];
+  cashOrders = safeStorage.getJSON("cashOrders") || [];
+
+  // Load all orders (card + cash)
+  loadAllOrders();
+
+  updateNavigation();
+  updateCart();
+  updateContactForm();
+
+  const hash = window.location.hash.substring(1);
+  const validSections = [
+    "menu",
+    "orders",
+    "contact",
+    "profile",
+    "login",
+    "about",
+    "help",
+  ];
+
+  if (hash === "logout") {
+    showLogoutConfirmModal();
+    return;
+  }
+
+  if (hash && validSections.includes(hash)) {
+    setActiveSection(hash);
+  } else {
+    setActiveSection("menu");
+    window.location.hash = "menu";
+  }
 }
 
-window.addEventListener('hashchange', () => {
-    const hash = window.location.hash.substring(1);
-    const validSections = ['menu', 'orders', 'contact', 'profile', 'login', 'about', 'help'];
-    
-    if (hash === 'logout') {
-        showLogoutConfirmModal();
-        return;
-    }
-    
-    if (hash && validSections.includes(hash)) {
-        setActiveSection(hash);
-        closeSidebar();
-    }
+window.addEventListener("hashchange", () => {
+  const hash = window.location.hash.substring(1);
+  const validSections = [
+    "menu",
+    "orders",
+    "contact",
+    "profile",
+    "login",
+    "about",
+    "help",
+  ];
+
+  if (hash === "logout") {
+    showLogoutConfirmModal();
+    return;
+  }
+
+  if (hash && validSections.includes(hash)) {
+    setActiveSection(hash);
+    closeSidebar();
+  }
 });
 
-document.addEventListener('click', (e) => {
-    if (sidebar && sidebar.classList.contains('active') && 
-        !sidebar.contains(e.target) && 
-        hamburgerBtn && !hamburgerBtn.contains(e.target) &&
-        e.target !== overlay) {
-        closeSidebar();
-    }
+document.addEventListener("click", (e) => {
+  if (
+    sidebar &&
+    sidebar.classList.contains("active") &&
+    !sidebar.contains(e.target) &&
+    hamburgerBtn &&
+    !hamburgerBtn.contains(e.target) &&
+    e.target !== overlay
+  ) {
+    closeSidebar();
+  }
 });
 
 // Handle form submissions
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const isContactForm = this.classList.contains('contact-form');
-        const isLoginForm = this.classList.contains('login-form');
-        const isRegisterForm = this.classList.contains('register-form');
-        
-        if (isContactForm) {
-            const name = contactNameInput?.value.trim() || '';
-            const email = contactEmailInput?.value.trim() || '';
-            const message = contactMessageInput?.value.trim() || '';
-            
-            if (!name || !email || !message) {
-                showToast('Please fill in all fields', 'error');
-                return;
-            }
-            
-            saveContactMessage(name, email, message);
-            showToast('Thank you for your message! We will get back to you soon.');
-            this.reset();
-            
-            if (currentUser && contactNameInput && contactEmailInput) {
-                contactNameInput.value = currentUser.name;
-                contactEmailInput.value = currentUser.email;
-            }
-        } else if (isLoginForm) {
-            const email = document.getElementById('loginEmail')?.value || '';
-            const password = document.getElementById('loginPassword')?.value || '';
-            
-            let users = safeStorage.getJSON('users');
-            if (!users || !Array.isArray(users)) {
-                users = [];
-            }
-            
-            const user = users.find(u => u.email === email && u.password === password);
-            
-            if (user) {
-                currentUser = user;
-                safeStorage.setJSON('currentUser', currentUser);
-                
-                if (checkUserTypeAndRedirect()) {
-                    return;
-                }
-                
-                updateNavigation();
-                updateContactForm();
-                showToast('Login successful!');
-                showLoginForm();
-                setActiveSection('menu');
-                updateCartVisibility();
-            } else {
-                if (email === 'manager@BusyCorner.com' && password === 'manager123') {
-                    currentUser = { email: 'manager@BusyCorner.com', password: 'manager123', name: 'Manager', phone: '' };
-                    safeStorage.setJSON('currentUser', currentUser);
-                    checkUserTypeAndRedirect();
-                    return;
-                }
-                
-                if (email === 'admin@admin.com' && password === 'admin123') {
-                    currentUser = { email: 'admin@admin.com', password: 'admin123', name: 'Tumelo Segale', phone: '' };
-                    safeStorage.setJSON('currentUser', currentUser);
-                    checkUserTypeAndRedirect();
-                    return;
-                }
-                
-                showToast('Invalid email or password', 'error');
-            }
-            
-            this.reset();
-        } else if (isRegisterForm) {
-            const name = document.getElementById('registerName')?.value || '';
-            const email = document.getElementById('registerEmail')?.value || '';
-            const phone = document.getElementById('registerPhone')?.value || '';
-            const password = document.getElementById('registerPassword')?.value || '';
-            const confirmPassword = document.getElementById('registerConfirmPassword')?.value || '';
-            
-            if (password !== confirmPassword) {
-                showToast('Passwords do not match', 'error');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showToast('Password must be at least 6 characters', 'error');
-                return;
-            }
-            
-            let users = safeStorage.getJSON('users');
-            if (!users || !Array.isArray(users)) {
-                users = [];
-            }
-            
-            if (users.some(u => u.email === email)) {
-                showToast('Email already registered', 'error');
-                return;
-            }
-            
-            if (email === 'manager@BusyCorner.com' || email === 'admin@admin.com') {
-                showToast('This email is reserved for staff', 'error');
-                return;
-            }
-            
-            const newUser = { name, email, phone, password };
-            users.push(newUser);
-            safeStorage.setJSON('users', users);
-            currentUser = newUser;
-            safeStorage.setJSON('currentUser', newUser);
-            updateNavigation();
-            updateContactForm();
-            showToast('Registration successful!');
-            showLoginForm();
-            setActiveSection('menu');
-            
-            this.reset();
+document.querySelectorAll("form").forEach((form) => {
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const isContactForm = this.classList.contains("contact-form");
+    const isLoginForm = this.classList.contains("login-form");
+    const isRegisterForm = this.classList.contains("register-form");
+
+    if (isContactForm) {
+      const name = contactNameInput?.value.trim() || "";
+      const email = contactEmailInput?.value.trim() || "";
+      const message = contactMessageInput?.value.trim() || "";
+
+      if (!name || !email || !message) {
+        showToast("Please fill in all fields", "error");
+        return;
+      }
+
+      saveContactMessage(name, email, message);
+      showToast("Thank you for your message! We will get back to you soon.");
+      this.reset();
+
+      if (currentUser && contactNameInput && contactEmailInput) {
+        contactNameInput.value = currentUser.name;
+        contactEmailInput.value = currentUser.email;
+      }
+    } else if (isLoginForm) {
+      const email = document.getElementById("loginEmail")?.value || "";
+      const password = document.getElementById("loginPassword")?.value || "";
+
+      let users = safeStorage.getJSON("users");
+      if (!users || !Array.isArray(users)) {
+        users = [];
+      }
+
+      // Case-insensitive email lookup
+      const user = users.find(
+        (u) => emailHelper.compare(u.email, email) && u.password === password
+      );
+
+      if (user) {
+        currentUser = user;
+        safeStorage.setJSON("currentUser", currentUser);
+
+        if (checkUserTypeAndRedirect()) {
+          return;
         }
-    });
+
+        updateNavigation();
+        updateContactForm();
+        showToast("Login successful!");
+        showLoginForm();
+        setActiveSection("menu");
+        updateCartVisibility();
+      } else {
+        // Check for staff accounts (case-insensitive)
+        if (
+          emailHelper.compare(email, "manager@BusyCorner.com") &&
+          password === "manager123"
+        ) {
+          currentUser = {
+            email: "manager@BusyCorner.com",
+            password: "manager123",
+            name: "Manager",
+            phone: "",
+          };
+          safeStorage.setJSON("currentUser", currentUser);
+          checkUserTypeAndRedirect();
+          return;
+        }
+
+        if (
+          emailHelper.compare(email, "admin@admin.com") &&
+          password === "admin123"
+        ) {
+          currentUser = {
+            email: "admin@admin.com",
+            password: "admin123",
+            name: "Tumelo Segale",
+            phone: "",
+          };
+          safeStorage.setJSON("currentUser", currentUser);
+          checkUserTypeAndRedirect();
+          return;
+        }
+
+        showToast("Invalid email or password", "error");
+      }
+
+      this.reset();
+    } else if (isRegisterForm) {
+      const name = document.getElementById("registerName")?.value || "";
+      const email = document.getElementById("registerEmail")?.value || "";
+      const phone = document.getElementById("registerPhone")?.value || "";
+      const password = document.getElementById("registerPassword")?.value || "";
+      const confirmPassword =
+        document.getElementById("registerConfirmPassword")?.value || "";
+
+      if (password !== confirmPassword) {
+        showToast("Passwords do not match", "error");
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast("Password must be at least 6 characters", "error");
+        return;
+      }
+
+      let users = safeStorage.getJSON("users");
+      if (!users || !Array.isArray(users)) {
+        users = [];
+      }
+
+      // Case-insensitive email check
+      if (users.some((u) => emailHelper.compare(u.email, email))) {
+        showToast("Email already registered", "error");
+        return;
+      }
+
+      if (
+        emailHelper.compare(email, "manager@BusyCorner.com") ||
+        emailHelper.compare(email, "admin@admin.com")
+      ) {
+        showToast("This email is reserved for staff", "error");
+        return;
+      }
+
+      const newUser = { name, email, phone, password };
+      users.push(newUser);
+      safeStorage.setJSON("users", users);
+      currentUser = newUser;
+      safeStorage.setJSON("currentUser", newUser);
+      updateNavigation();
+      updateContactForm();
+      showToast("Registration successful!");
+      showLoginForm();
+      setActiveSection("menu");
+
+      this.reset();
+    }
+  });
 });
 
 // Form switching
-if (showRegister) showRegister.addEventListener('click', (e) => {
+if (showRegister)
+  showRegister.addEventListener("click", (e) => {
     e.preventDefault();
     showRegisterForm();
-});
+  });
 
-if (showLogin) showLogin.addEventListener('click', (e) => {
+if (showLogin)
+  showLogin.addEventListener("click", (e) => {
     e.preventDefault();
     showLoginForm();
+  });
+
+// Forgot password link
+document.querySelectorAll(".forgot-password-link").forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    showForgotPasswordModal();
+  });
 });
 
+// Forgot password modal event listeners
+if (closeForgotModal)
+  closeForgotModal.addEventListener("click", closeForgotPasswordModal);
+
+if (forgotNextBtn) forgotNextBtn.addEventListener("click", handleForgotNext);
+
+if (forgotResendBtn)
+  forgotResendBtn.addEventListener("click", handleForgotResend);
+
+if (forgotVerifyBtn)
+  forgotVerifyBtn.addEventListener("click", handleForgotVerify);
+
+if (forgotConfirmBtn)
+  forgotConfirmBtn.addEventListener("click", handleForgotConfirm);
+
+if (forgotPasswordModal)
+  forgotPasswordModal.addEventListener("click", (e) => {
+    if (e.target === forgotPasswordModal) {
+      closeForgotPasswordModal();
+    }
+  });
+
+if (forgotPin)
+  forgotPin.addEventListener("input", (e) => {
+    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
+  });
+
 // Menu filter buttons
-filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        showMenuCategory(btn.dataset.filter);
-        if (menuSearch) menuSearch.value = '';
-        document.querySelectorAll('.menu-item').forEach(item => {
-            if (item.dataset.category === btn.dataset.filter) {
-                item.style.display = 'block';
-            }
-        });
-        document.querySelectorAll('.no-results').forEach(el => el.remove());
+filterBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    showMenuCategory(btn.dataset.filter);
+    if (menuSearch) menuSearch.value = "";
+    document.querySelectorAll(".menu-item").forEach((item) => {
+      if (item.dataset.category === btn.dataset.filter) {
+        item.style.display = "block";
+      }
     });
+    document.querySelectorAll(".no-results").forEach((el) => el.remove());
+  });
 });
 
 // Menu search
-if (menuSearch) menuSearch.addEventListener('input', (e) => {
+if (menuSearch)
+  menuSearch.addEventListener("input", (e) => {
     searchMenuItems(e.target.value);
-});
+  });
 
 // Cart functionality
-if (cartBtn) cartBtn.addEventListener('click', toggleCartModal);
-if (closeCart) closeCart.addEventListener('click', () => {
-    if (cartModal) cartModal.classList.remove('active');
-});
+if (cartBtn) cartBtn.addEventListener("click", toggleCartModal);
+if (closeCart)
+  closeCart.addEventListener("click", () => {
+    if (cartModal) cartModal.classList.remove("active");
+  });
 
 // Order modal functionality
-if (closeOrderModal) closeOrderModal.addEventListener('click', closeOrderModalFunc);
+if (closeOrderModal)
+  closeOrderModal.addEventListener("click", closeOrderModalFunc);
 
-if (orderModal) orderModal.addEventListener('click', (e) => {
+if (orderModal)
+  orderModal.addEventListener("click", (e) => {
     if (e.target === orderModal) {
-        closeOrderModalFunc();
+      closeOrderModalFunc();
     }
-});
+  });
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && orderModal && orderModal.classList.contains('active')) {
-        closeOrderModalFunc();
-    }
+document.addEventListener("keydown", (e) => {
+  if (
+    e.key === "Escape" &&
+    orderModal &&
+    orderModal.classList.contains("active")
+  ) {
+    closeOrderModalFunc();
+  }
 });
 
 // Checkout button
-if (checkoutBtn) checkoutBtn.addEventListener('click', () => {
+if (checkoutBtn)
+  checkoutBtn.addEventListener("click", () => {
     if (cart.length === 0) {
-        showToast('Your cart is empty!', 'error');
-        return;
+      showToast("Your cart is empty!", "error");
+      return;
     }
-    
+
     if (!currentUser) {
-        showToast('Login to checkout', 'error');
-        setActiveSection('login');
-        return;
+      showToast("Login to checkout", "error");
+      setActiveSection("login");
+      return;
     }
-    
+
     if (!isWithinOperatingHours()) {
-        showToast('Orders can only be placed during operating hours', 'error');
-        return;
+      showToast("Orders can only be placed during operating hours", "error");
+      return;
     }
-    
+
     processPayment();
-});
+  });
 
 // Profile edit functionality
-if (editProfileBtn) editProfileBtn.addEventListener('click', showEditProfileModal);
-if (deleteProfileBtn) deleteProfileBtn.addEventListener('click', showDeleteConfirmModal);
+if (editProfileBtn)
+  editProfileBtn.addEventListener("click", showEditProfileModal);
+if (deleteProfileBtn)
+  deleteProfileBtn.addEventListener("click", showDeleteConfirmModal);
 
 // Profile edit modal functionality
-if (closeProfileEditModal) closeProfileEditModal.addEventListener('click', closeEditProfileModal);
-if (cancelProfileEdit) cancelProfileEdit.addEventListener('click', closeEditProfileModal);
+if (closeProfileEditModal)
+  closeProfileEditModal.addEventListener("click", closeEditProfileModal);
+if (cancelProfileEdit)
+  cancelProfileEdit.addEventListener("click", closeEditProfileModal);
 
-if (profileEditModal) profileEditModal.addEventListener('click', (e) => {
+if (profileEditModal)
+  profileEditModal.addEventListener("click", (e) => {
     if (e.target === profileEditModal) {
-        closeEditProfileModal();
+      closeEditProfileModal();
     }
-});
+  });
 
 // Save profile changes
-if (saveProfileBtn) saveProfileBtn.addEventListener('click', saveProfileChanges);
+if (saveProfileBtn)
+  saveProfileBtn.addEventListener("click", saveProfileChanges);
 
 // Delete confirmation modal functionality
-if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDeleteConfirmModal);
-if (cancelDelete) cancelDelete.addEventListener('click', closeDeleteConfirmModal);
+if (closeDeleteModal)
+  closeDeleteModal.addEventListener("click", closeDeleteConfirmModal);
+if (cancelDelete)
+  cancelDelete.addEventListener("click", closeDeleteConfirmModal);
 
-if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', (e) => {
+if (deleteConfirmModal)
+  deleteConfirmModal.addEventListener("click", (e) => {
     if (e.target === deleteConfirmModal) {
-        closeDeleteConfirmModal();
+      closeDeleteConfirmModal();
     }
-});
+  });
 
 // Confirm delete
-if (confirmDelete) confirmDelete.addEventListener('click', deleteUserProfile);
+if (confirmDelete) confirmDelete.addEventListener("click", deleteUserProfile);
 
 // Logout confirmation modal functionality
-if (closeLogoutModal) closeLogoutModal.addEventListener('click', closeLogoutConfirmModal);
-if (cancelLogout) cancelLogout.addEventListener('click', closeLogoutConfirmModal);
+if (closeLogoutModal)
+  closeLogoutModal.addEventListener("click", closeLogoutConfirmModal);
+if (cancelLogout)
+  cancelLogout.addEventListener("click", closeLogoutConfirmModal);
 
-if (logoutConfirmModal) logoutConfirmModal.addEventListener('click', (e) => {
+if (logoutConfirmModal)
+  logoutConfirmModal.addEventListener("click", (e) => {
     if (e.target === logoutConfirmModal) {
-        closeLogoutConfirmModal();
+      closeLogoutConfirmModal();
     }
-});
+  });
 
 // Confirm logout
-if (confirmLogout) confirmLogout.addEventListener('click', handleLogout);
+if (confirmLogout) confirmLogout.addEventListener("click", handleLogout);
 
 // Close modals with escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        if (orderModal && orderModal.classList.contains('active')) {
-            closeOrderModalFunc();
-        }
-        if (profileEditModal && profileEditModal.classList.contains('active')) {
-            closeEditProfileModal();
-        }
-        if (deleteConfirmModal && deleteConfirmModal.classList.contains('active')) {
-            closeDeleteConfirmModal();
-        }
-        if (logoutConfirmModal && logoutConfirmModal.classList.contains('active')) {
-            closeLogoutConfirmModal();
-        }
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (orderModal && orderModal.classList.contains("active")) {
+      closeOrderModalFunc();
     }
+    if (profileEditModal && profileEditModal.classList.contains("active")) {
+      closeEditProfileModal();
+    }
+    if (deleteConfirmModal && deleteConfirmModal.classList.contains("active")) {
+      closeDeleteConfirmModal();
+    }
+    if (logoutConfirmModal && logoutConfirmModal.classList.contains("active")) {
+      closeLogoutConfirmModal();
+    }
+    if (
+      forgotPasswordModal &&
+      forgotPasswordModal.classList.contains("active")
+    ) {
+      closeForgotPasswordModal();
+    }
+  }
 });
 
 // Performance-optimized event listeners for real-time updates
 let orderUpdateDebounce = null;
-window.addEventListener('ordersUpdated', function() {
-    if (orderUpdateDebounce) clearTimeout(orderUpdateDebounce);
-    
-    orderUpdateDebounce = setTimeout(() => {
-        // Reload orders when manager updates them
-        orders = safeStorage.getJSON('orders') || [];
-        cashOrders = safeStorage.getJSON('cashOrders') || [];
-        loadAllOrders();
-        
-        if (document.getElementById('orders')?.classList.contains('active') && currentUser) {
-            displayOrders();
-        }
-    }, 500);
+window.addEventListener("ordersUpdated", function () {
+  if (orderUpdateDebounce) clearTimeout(orderUpdateDebounce);
+
+  orderUpdateDebounce = setTimeout(() => {
+    // Reload orders when manager updates them
+    orders = safeStorage.getJSON("orders") || [];
+    cashOrders = safeStorage.getJSON("cashOrders") || [];
+    loadAllOrders();
+
+    if (
+      document.getElementById("orders")?.classList.contains("active") &&
+      currentUser
+    ) {
+      displayOrders();
+    }
+  }, 500);
 });
 
 let menuUpdateDebounce = null;
-window.addEventListener('menuItemsUpdated', function() {
-    if (menuUpdateDebounce) clearTimeout(menuUpdateDebounce);
-    
-    menuUpdateDebounce = setTimeout(() => {
-        // Reload menu items when manager updates them
-        menuItems = safeStorage.getJSON('menuItems') || [];
-        if (document.getElementById('menu')?.classList.contains('active')) {
-            displayMenuItems();
-        }
-    }, 500);
+window.addEventListener("menuItemsUpdated", function () {
+  if (menuUpdateDebounce) clearTimeout(menuUpdateDebounce);
+
+  menuUpdateDebounce = setTimeout(() => {
+    // Reload menu items when manager updates them
+    menuItems = safeStorage.getJSON("menuItems") || [];
+    if (document.getElementById("menu")?.classList.contains("active")) {
+      displayMenuItems();
+    }
+  }, 500);
 });
 
 // Initialize page on load
-document.addEventListener('DOMContentLoaded', handleInitialLoad);
+document.addEventListener("DOMContentLoaded", handleInitialLoad);
 
 // Handle window resize for desktop warning
 function checkDevice() {
-    const desktopWarning = document.getElementById('desktopWarning');
-    const mobileContent = document.getElementById('mobileContent');
-    
-    if (!desktopWarning || !mobileContent) return;
-    
-    if (window.innerWidth >= 1025) {
-        desktopWarning.style.display = 'flex';
-        mobileContent.style.display = 'none';
-    } else {
-        desktopWarning.style.display = 'none';
-        mobileContent.style.display = 'block';
-    }
+  const desktopWarning = document.getElementById("desktopWarning");
+  const mobileContent = document.getElementById("mobileContent");
+
+  if (!desktopWarning || !mobileContent) return;
+
+  if (window.innerWidth >= 1025) {
+    desktopWarning.style.display = "flex";
+    mobileContent.style.display = "none";
+  } else {
+    desktopWarning.style.display = "none";
+    mobileContent.style.display = "block";
+  }
 }
 
 // Initial check and resize listener
 checkDevice();
-window.addEventListener('resize', checkDevice);
+window.addEventListener("resize", checkDevice);
 
 // Brand name search optimization
-document.addEventListener('DOMContentLoaded', function() {
-    document.title = 'BusyCorner';
-    
-    const metaKeywords = document.createElement('meta');
-    metaKeywords.name = 'keywords';
-    metaKeywords.content = 'BusyCorner, BusyCorner, Chaneng, restaurant, food, meals, burgers, drinks, South Africa, takeaway, dine-in';
-    document.head.appendChild(metaKeywords);
+document.addEventListener("DOMContentLoaded", function () {
+  document.title = "BusyCorner";
+
+  const metaKeywords = document.createElement("meta");
+  metaKeywords.name = "keywords";
+  metaKeywords.content =
+    "BusyCorner, BusyCorner, Chaneng, restaurant, food, meals, burgers, drinks, South Africa, takeaway, dine-in";
+  document.head.appendChild(metaKeywords);
 });
 
 // Add event listener for logout link in sidebar
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('logout-link') || 
-        (e.target.closest('.logout-link'))) {
-        e.preventDefault();
-        showLogoutConfirmModal();
-        closeSidebar();
-    }
+document.addEventListener("click", function (e) {
+  if (
+    e.target.classList.contains("logout-link") ||
+    e.target.closest(".logout-link")
+  ) {
+    e.preventDefault();
+    showLogoutConfirmModal();
+    closeSidebar();
+  }
 });

@@ -198,6 +198,51 @@
             </div>
         </div>
 
+        <!-- Forgot Password Modal -->
+        <div class="forgot-password-modal" id="forgotPasswordModal">
+            <div class="forgot-password-modal-content">
+                <div class="forgot-password-modal-header">
+                    <h3>Reset Password</h3>
+                    <button class="close-forgot-modal" id="closeForgotModal">&times;</button>
+                </div>
+                <div class="forgot-password-modal-body" id="forgotPasswordBody">
+                    <!-- Step 1: Email Entry -->
+                    <div class="forgot-step" id="forgotStep1">
+                        <p>Enter your registered email address to reset your password.</p>
+                        <div class="form-group">
+                            <input type="email" id="forgotEmail" placeholder="Enter your email" required>
+                        </div>
+                        <button type="button" class="submit-btn" id="forgotNextBtn">Next</button>
+                    </div>
+
+                    <!-- Step 2: PIN Verification (hidden initially) -->
+                    <div class="forgot-step" id="forgotStep2" style="display: none;">
+                        <p>A 6-digit PIN has been sent to <span id="forgotEmailDisplay"></span></p>
+                        <div class="form-group">
+                            <input type="text" id="forgotPin" maxlength="6" placeholder="Enter 6-digit PIN" required>
+                        </div>
+                        <div class="pin-timer" id="pinTimer">PIN expires in 10:00</div>
+                        <button type="button" class="submit-btn" id="forgotVerifyBtn">Verify PIN</button>
+                        <button type="button" class="cancel-btn" id="forgotResendBtn" style="margin-top: 10px;">Resend
+                            PIN</button>
+                    </div>
+
+                    <!-- Step 3: New Password (hidden initially) -->
+                    <div class="forgot-step" id="forgotStep3" style="display: none;">
+                        <p>Enter your new password.</p>
+                        <div class="form-group">
+                            <input type="password" id="forgotNewPassword" placeholder="New password" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="forgotConfirmPassword" placeholder="Confirm new password"
+                                required>
+                        </div>
+                        <button type="button" class="submit-btn" id="forgotConfirmBtn">Confirm New Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main content area -->
         <main id="mainContent">
             <!-- Menu Section (Now Default Active) -->
@@ -292,10 +337,7 @@
             <section id="login" class="page-section">
                 <div class="section-content">
                     <h1 id="formTitle">Login</h1>
-                    <p id="formSubtitle">Access your account to make online orders, view
-                        order history, and
-                        more.
-                    </p>
+                    <p id="formSubtitle">Access your account to make online orders, view order history, and more.</p>
 
                     <!-- Login Form -->
                     <form class="login-form active-form">
@@ -309,10 +351,9 @@
                         <button type="submit" class="submit-btn">Login</button>
 
                         <div class="form-links" style="margin: 0%; padding: 0%; margin-top: 4px; width: 100%;">
-                            <a href="#" style="color: blue; font-weight: normal; text-align: end;">Forgot Password</a>
-                            <!--Forgot password-->
+                            <a href="#" class="forgot-password-link"
+                                style="color: blue; font-weight: normal; text-align: end;">Forgot Password</a>
                         </div>
-
 
                         <div class="form-links">
                             Don't have an account? <a href="#register" id="showRegister">Sign up</a>
@@ -369,14 +410,13 @@
                             culture, flavor, and community come together.
                         </p>
                         <p>Rooted in local tradition and township culture, <strong>BusyCorner</strong> is more than just
-                            a place to eat
-                            it's a place to connect, share stories, and enjoy authentic meals in a warm, familiar space.
+                            a place to eat it's a place to connect, share stories, and enjoy authentic meals in a warm,
+                            familiar space.
                         </p>
                         <p>
                             Whether you're stopping by for a quick bite, enjoying a meal with family, or meeting
                             friends, <strong>BusyCorner</strong> is your go-to spot for delicious food, generous
-                            portions, and friendly
-                            service.
+                            portions, and friendly service.
                         </p>
                     </div>
 
@@ -404,7 +444,7 @@
                 </div>
             </section>
 
-            <!-- Help Section -->
+            <!-- Help Section (Updated) -->
             <section id="help" class="page-section">
                 <div class="section-content">
                     <h1>Help & FAQ</h1>
@@ -465,6 +505,19 @@
                             <h3>What if I forget my collection PIN?</h3>
                             <p>Your PIN is displayed in the order details in the "Orders" section. If you cannot
                                 access your account, please visit us with your order ID and email verification.</p>
+                        </div>
+
+                        <div class="faq-item">
+                            <h3>How do I reset my password?</h3>
+                            <p>Click the "Forgot Password" link on the login page. Enter your registered email address,
+                                and we'll send a 6-digit PIN to your email. Enter the PIN to verify your identity, then
+                                create a new password. Your new password will take effect immediately.</p>
+                        </div>
+
+                        <div class="faq-item">
+                            <h3>How long does the password reset PIN last?</h3>
+                            <p>The 6-digit PIN sent to your email expires after 10 minutes for security reasons. If you
+                                don't use it within this time, you'll need to request a new PIN.</p>
                         </div>
                     </div>
                 </div>
