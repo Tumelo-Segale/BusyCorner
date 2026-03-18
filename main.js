@@ -376,66 +376,6 @@ const emailHelper = {
   },
 };
 
-// PIN generation and management for password reset
-const pinManager = {
-  pins: new Map(),
-
-  generatePin: function (email) {
-    const pin = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 600000; // 10 minutes
-    const normalizedEmail = emailHelper.normalize(email);
-    this.pins.set(normalizedEmail, { pin, expiresAt });
-    return pin;
-  },
-
-  verifyPin: function (email, enteredPin) {
-    const normalizedEmail = emailHelper.normalize(email);
-    const pinData = this.pins.get(normalizedEmail);
-    if (!pinData) return false;
-    if (Date.now() > pinData.expiresAt) {
-      this.pins.delete(normalizedEmail);
-      return false;
-    }
-    return pinData.pin === enteredPin;
-  },
-
-  clearPin: function (email) {
-    const normalizedEmail = emailHelper.normalize(email);
-    this.pins.delete(normalizedEmail);
-  },
-};
-
-// Simulated email sending function (would connect to actual email service in production)
-function sendPasswordResetEmail(toEmail, userName, pin) {
-  console.log(`Sending email to: ${toEmail}`);
-  console.log(`Subject: Password Reset Request - BusyCorner Restaurant`);
-  console.log(`
-To ${userName}
-
-You requested a password change of your BusyCorner Restaurant Account. The PIN to allow the password change is below.
-
-Email: ${toEmail}
-PIN: ${pin}
-
-Do not reply to this email address as it is automated and therefore not monitored.
-
-Thank you
-BusyCorner Restaurant
-    `);
-
-  // In a real implementation, you would use an email API here
-  // For demo purposes, we'll store in localStorage for the demo
-  const sentPins = safeStorage.getJSON("sentResetPins") || {};
-  sentPins[emailHelper.normalize(toEmail)] = {
-    pin: pin,
-    userName: userName,
-    timestamp: Date.now(),
-  };
-  safeStorage.setJSON("sentResetPins", sentPins);
-
-  return true;
-}
-
 // Get DOM elements
 const hamburgerBtn = document.getElementById("hamburgerBtn");
 const sidebar = document.getElementById("sidebar");
@@ -511,22 +451,17 @@ const closeLogoutModal = document.getElementById("closeLogoutModal");
 const cancelLogout = document.getElementById("cancelLogout");
 const confirmLogout = document.getElementById("confirmLogout");
 
-// Forgot Password Modal elements
+// Forgot Password Modal elements - UPDATED: Removed PIN-related elements
 const forgotPasswordModal = document.getElementById("forgotPasswordModal");
 const closeForgotModal = document.getElementById("closeForgotModal");
 const forgotStep1 = document.getElementById("forgotStep1");
 const forgotStep2 = document.getElementById("forgotStep2");
-const forgotStep3 = document.getElementById("forgotStep3");
 const forgotEmail = document.getElementById("forgotEmail");
 const forgotEmailDisplay = document.getElementById("forgotEmailDisplay");
-const forgotPin = document.getElementById("forgotPin");
 const forgotNewPassword = document.getElementById("forgotNewPassword");
 const forgotConfirmPassword = document.getElementById("forgotConfirmPassword");
 const forgotNextBtn = document.getElementById("forgotNextBtn");
-const forgotVerifyBtn = document.getElementById("forgotVerifyBtn");
-const forgotResendBtn = document.getElementById("forgotResendBtn");
 const forgotConfirmBtn = document.getElementById("forgotConfirmBtn");
-const pinTimer = document.getElementById("pinTimer");
 
 // Toast element
 const toast = document.getElementById("toast");
@@ -538,7 +473,6 @@ let orders = safeStorage.getJSON("orders") || [];
 let menuItems = safeStorage.getJSON("menuItems") || [];
 let contactMessages = safeStorage.getJSON("contactMessages") || [];
 let cashOrders = safeStorage.getJSON("cashOrders") || [];
-let pinTimerInterval = null;
 
 // Initialize default data if not exists
 function initializeDefaultData() {
@@ -571,11 +505,6 @@ function initializeDefaultData() {
   if (!cashOrders || !Array.isArray(cashOrders)) {
     cashOrders = [];
     safeStorage.setJSON("cashOrders", cashOrders);
-  }
-
-  // Initialize sent pins for demo
-  if (!safeStorage.getJSON("sentResetPins")) {
-    safeStorage.setJSON("sentResetPins", {});
   }
 }
 
@@ -1705,24 +1634,16 @@ function saveContactMessage(name, email, message) {
   window.dispatchEvent(event);
 }
 
-// Forgot Password Functions
+// Forgot Password Functions - UPDATED: Removed PIN verification
 function showForgotPasswordModal() {
   if (!forgotPasswordModal) return;
 
   // Reset to step 1
   if (forgotStep1) forgotStep1.style.display = "block";
   if (forgotStep2) forgotStep2.style.display = "none";
-  if (forgotStep3) forgotStep3.style.display = "none";
   if (forgotEmail) forgotEmail.value = "";
-  if (forgotPin) forgotPin.value = "";
   if (forgotNewPassword) forgotNewPassword.value = "";
   if (forgotConfirmPassword) forgotConfirmPassword.value = "";
-
-  // Clear any existing timer
-  if (pinTimerInterval) {
-    clearInterval(pinTimerInterval);
-    pinTimerInterval = null;
-  }
 
   forgotPasswordModal.classList.add("active");
 }
@@ -1730,10 +1651,6 @@ function showForgotPasswordModal() {
 function closeForgotPasswordModal() {
   if (forgotPasswordModal) {
     forgotPasswordModal.classList.remove("active");
-  }
-  if (pinTimerInterval) {
-    clearInterval(pinTimerInterval);
-    pinTimerInterval = null;
   }
 }
 
@@ -1753,78 +1670,23 @@ function handleForgotNext() {
     return;
   }
 
-  // Generate and send PIN
-  const pin = pinManager.generatePin(email);
-  sendPasswordResetEmail(email, user.name, pin);
-
-  // Update display
+  // Update display with user's email
   if (forgotEmailDisplay) {
     forgotEmailDisplay.textContent = email;
   }
 
-  // Show step 2
+  // Store email for the next step
+  if (forgotEmail) forgotEmail.dataset.verifiedEmail = email;
+
+  // Show step 2 (password reset)
   if (forgotStep1) forgotStep1.style.display = "none";
   if (forgotStep2) forgotStep2.style.display = "block";
-
-  // Start timer
-  startPinTimer();
-
-  showToast("PIN sent to your email");
-}
-
-function handleForgotResend() {
-  const email = forgotEmail ? forgotEmail.value.trim() : "";
-
-  if (!email) {
-    showToast("Email not found", "error");
-    return;
-  }
-
-  const users = safeStorage.getJSON("users") || [];
-  const user = emailHelper.findUserByEmail(users, email);
-
-  if (user) {
-    const pin = pinManager.generatePin(email);
-    sendPasswordResetEmail(email, user.name, pin);
-
-    // Restart timer
-    if (pinTimerInterval) {
-      clearInterval(pinTimerInterval);
-    }
-    startPinTimer();
-
-    showToast("New PIN sent to your email");
-  } else {
-    showToast("User not found", "error");
-  }
-}
-
-function handleForgotVerify() {
-  const email = forgotEmail ? forgotEmail.value.trim() : "";
-  const enteredPin = forgotPin ? forgotPin.value : "";
-
-  if (!email || !enteredPin) {
-    showToast("Please enter the PIN", "error");
-    return;
-  }
-
-  if (pinManager.verifyPin(email, enteredPin)) {
-    // PIN is correct, move to step 3
-    if (forgotStep2) forgotStep2.style.display = "none";
-    if (forgotStep3) forgotStep3.style.display = "block";
-
-    // Stop timer
-    if (pinTimerInterval) {
-      clearInterval(pinTimerInterval);
-      pinTimerInterval = null;
-    }
-  } else {
-    showToast("Invalid or expired PIN", "error");
-  }
 }
 
 function handleForgotConfirm() {
-  const email = forgotEmail ? forgotEmail.value.trim() : "";
+  const email = forgotEmail
+    ? forgotEmail.dataset.verifiedEmail || forgotEmail.value.trim()
+    : "";
   const newPassword = forgotNewPassword ? forgotNewPassword.value : "";
   const confirmPassword = forgotConfirmPassword
     ? forgotConfirmPassword.value
@@ -1853,9 +1715,6 @@ function handleForgotConfirm() {
     users[userIndex].password = newPassword;
     safeStorage.setJSON("users", users);
 
-    // Clear the PIN
-    pinManager.clearPin(email);
-
     // Close modal
     closeForgotPasswordModal();
 
@@ -1866,32 +1725,6 @@ function handleForgotConfirm() {
   } else {
     showToast("User not found", "error");
   }
-}
-
-function startPinTimer() {
-  const timerElement = pinTimer;
-  if (!timerElement) return;
-
-  let timeLeft = 600; // 10 minutes in seconds
-
-  const updateTimer = () => {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    timerElement.textContent = `PIN expires in ${minutes}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-
-    if (timeLeft <= 0) {
-      clearInterval(pinTimerInterval);
-      pinTimerInterval = null;
-      timerElement.textContent = "PIN expired";
-    }
-
-    timeLeft--;
-  };
-
-  updateTimer();
-  pinTimerInterval = setInterval(updateTimer, 1000);
 }
 
 // Event listeners
@@ -2162,17 +1995,11 @@ document.querySelectorAll(".forgot-password-link").forEach((link) => {
   });
 });
 
-// Forgot password modal event listeners
+// Forgot password modal event listeners - UPDATED
 if (closeForgotModal)
   closeForgotModal.addEventListener("click", closeForgotPasswordModal);
 
 if (forgotNextBtn) forgotNextBtn.addEventListener("click", handleForgotNext);
-
-if (forgotResendBtn)
-  forgotResendBtn.addEventListener("click", handleForgotResend);
-
-if (forgotVerifyBtn)
-  forgotVerifyBtn.addEventListener("click", handleForgotVerify);
 
 if (forgotConfirmBtn)
   forgotConfirmBtn.addEventListener("click", handleForgotConfirm);
@@ -2182,11 +2009,6 @@ if (forgotPasswordModal)
     if (e.target === forgotPasswordModal) {
       closeForgotPasswordModal();
     }
-  });
-
-if (forgotPin)
-  forgotPin.addEventListener("input", (e) => {
-    e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6);
   });
 
 // Menu filter buttons

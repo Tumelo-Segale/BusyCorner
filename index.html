@@ -198,7 +198,7 @@
             </div>
         </div>
 
-        <!-- Forgot Password Modal -->
+        <!-- Forgot Password Modal - Updated: Removed Step 2 (PIN verification) -->
         <div class="forgot-password-modal" id="forgotPasswordModal">
             <div class="forgot-password-modal-content">
                 <div class="forgot-password-modal-header">
@@ -206,7 +206,7 @@
                     <button class="close-forgot-modal" id="closeForgotModal">&times;</button>
                 </div>
                 <div class="forgot-password-modal-body" id="forgotPasswordBody">
-                    <!-- Step 1: Email Entry -->
+                    <!-- Step 1: Email Entry (will go directly to password reset) -->
                     <div class="forgot-step" id="forgotStep1">
                         <p>Enter your registered email address to reset your password.</p>
                         <div class="form-group">
@@ -215,21 +215,9 @@
                         <button type="button" class="submit-btn" id="forgotNextBtn">Next</button>
                     </div>
 
-                    <!-- Step 2: PIN Verification (hidden initially) -->
+                    <!-- Step 2: New Password (formerly Step 3) -->
                     <div class="forgot-step" id="forgotStep2" style="display: none;">
-                        <p>A 6-digit PIN has been sent to <span id="forgotEmailDisplay"></span></p>
-                        <div class="form-group">
-                            <input type="text" id="forgotPin" maxlength="6" placeholder="Enter 6-digit PIN" required>
-                        </div>
-                        <div class="pin-timer" id="pinTimer">PIN expires in 10:00</div>
-                        <button type="button" class="submit-btn" id="forgotVerifyBtn">Verify PIN</button>
-                        <button type="button" class="cancel-btn" id="forgotResendBtn" style="margin-top: 10px;">Resend
-                            PIN</button>
-                    </div>
-
-                    <!-- Step 3: New Password (hidden initially) -->
-                    <div class="forgot-step" id="forgotStep3" style="display: none;">
-                        <p>Enter your new password.</p>
+                        <p>Enter your new password for <span id="forgotEmailDisplay"></span></p>
                         <div class="form-group">
                             <input type="password" id="forgotNewPassword" placeholder="New password" required>
                         </div>
@@ -237,7 +225,7 @@
                             <input type="password" id="forgotConfirmPassword" placeholder="Confirm new password"
                                 required>
                         </div>
-                        <button type="button" class="submit-btn" id="forgotConfirmBtn">Confirm New Password</button>
+                        <button type="button" class="submit-btn" id="forgotConfirmBtn">Reset Password</button>
                     </div>
                 </div>
             </div>
@@ -509,15 +497,9 @@
 
                         <div class="faq-item">
                             <h3>How do I reset my password?</h3>
-                            <p>Click the "Forgot Password" link on the login page. Enter your registered email address,
-                                and we'll send a 6-digit PIN to your email. Enter the PIN to verify your identity, then
-                                create a new password. Your new password will take effect immediately.</p>
-                        </div>
-
-                        <div class="faq-item">
-                            <h3>How long does the password reset PIN last?</h3>
-                            <p>The 6-digit PIN sent to your email expires after 10 minutes for security reasons. If you
-                                don't use it within this time, you'll need to request a new PIN.</p>
+                            <p>Click the "Forgot Password" link on the login page. Enter your registered email address.
+                                If the email is registered, you'll be able to set a new password immediately.
+                                Your new password will take effect right away.</p>
                         </div>
                     </div>
                 </div>
